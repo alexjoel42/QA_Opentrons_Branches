@@ -4,7 +4,7 @@ from opentrons.protocol_api.module_contexts import AbsorbanceReaderContext
 
 # metadata
 metadata = {
-    'protocolName': 'Absorbance Reader Multi read/csv smoke p50 multi Woo',
+    'protocolName': 'smoke test plate reader',
     'author': 'Platform Expansion',
 }
 
@@ -39,6 +39,7 @@ def run(protocol: protocol_api.ProtocolContext):
     mod.open_lid()
     protocol.move_labware(plate, mod, use_gripper=True)
     mod.close_lid()
+    protocol.comment("check in about RABR-674")
 
     # Take a reading and show the resulting absorbance values.
     # Issue: cant read before you initialize or you an get an error
@@ -47,7 +48,7 @@ def run(protocol: protocol_api.ProtocolContext):
     protocol.comment(msg=msg)
     protocol.pause(msg=msg)
     mod.read(export_filename="single_read_csv_name.csv")
-    '''
+
 
     # Initialize to multiple wavelengths
     protocol.pause(msg="Perform Multi Read")
@@ -88,6 +89,6 @@ def run(protocol: protocol_api.ProtocolContext):
     mod.close_lid()
 
     mod.read(export_filename="csv_name.csv")
-     '''
+
 
 
