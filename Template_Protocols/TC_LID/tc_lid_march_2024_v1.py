@@ -2,7 +2,7 @@ from typing import List, Dict, Any, Optional
 from opentrons.protocol_api import ProtocolContext, Labware
 
 metadata = {"protocolName": "Opentrons Tough Auto-Sealing Lid Test"}
-requirements = {"robotType": "Flex", "apiLevel": "2.20"}
+requirements = {"robotType": "Flex", "apiLevel": "2.21"}
 
 
 """
@@ -81,7 +81,7 @@ def run(protocol: ProtocolContext):
                 drop_offset=OFFSET_THERMOCYCLER["drop"],
             )
             thermocycler.close_lid()
-            thermocycler.open_lid
+            thermocycler.open_lid()
             _move_labware_with_offset_and_pause(
                 protocol,
                 lid,
@@ -89,8 +89,8 @@ def run(protocol: ProtocolContext):
                 pick_up_offset=OFFSET_THERMOCYCLER["pick-up"],
                 drop_offset=OFFSET_DECK["drop"],
             )
-            thermocycler.close_lid
-            thermocycler.open_lid
+            thermocycler.close_lid()
+            thermocycler.open_lid()
 
         else:
             _move_labware_with_offset_and_pause(

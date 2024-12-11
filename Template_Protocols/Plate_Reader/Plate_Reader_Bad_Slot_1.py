@@ -12,7 +12,7 @@ metadata = {"protocolName": "plate_reader bad CSv"}
 def run(protocol: protocol_api.ProtocolContext):
     partial_rack = protocol.load_labware(
         load_name="opentrons_flex_96_tiprack_1000ul",
-        location="D2"
+        location="D3"
     )
     trash = protocol.load_trash_bin("A3")
     instrument = protocol.load_instrument(

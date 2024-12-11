@@ -30,8 +30,8 @@ def run(protocol: protocol_api.ProtocolContext):
 
     # Initialize to a single wavelength with reference wavelength
     # Issue: Make sure there is no labware here or youll get an error
-    mod.close_lid()
-    #mod.initialize('single', [600], 450)
+    #mod.close_lid()
+    mod.initialize('single', [600], 450)
 
     # NOTE: CANNOT INITIALIZE WITH THE LID OPEN
 

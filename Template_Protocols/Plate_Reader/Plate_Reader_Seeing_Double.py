@@ -30,7 +30,7 @@ def run(protocol: protocol_api.ProtocolContext):
     plate_2 = protocol.load_labware("nest_96_wellplate_200ul_flat", "C1")
 
     tiprack_1000 = protocol.load_labware(load_name='opentrons_flex_96_tiprack_50ul', location="B2")
-    trash_labware = protocol.load_trash_bin("B3")
+    trash_labware = protocol.load_trash_bin("A3")
     instrument = protocol.load_instrument("flex_8channel_50", "right", tip_racks=[tiprack_1000])
 
     # pick up tip and perform action
@@ -75,10 +75,10 @@ def run(protocol: protocol_api.ProtocolContext):
 
     protocol.comment("we're now going to do them in parallel")
     # Mod 1 for multiple wavelengths
-    mod.initialize('multi', [450, 570, 600])
+    mod.initialize('multi', [450, 562, 600])
     # Mod 2 with a different filter
     protocol.comment("OG with the different filter")
-    mod_2.initialize('multi', [450, 600])
+    mod_2.initialize('multi', [450, 562, 600])
 
     # Open the lids for both mods and move the labware into the readers
     mod.open_lid()
@@ -126,6 +126,7 @@ def run(protocol: protocol_api.ProtocolContext):
     protocol.move_labware(plate, "C1", use_gripper=True)
     protocol.move_labware(plate_2, "D1", use_gripper=True)
     mod.close_lid()
+    mod_2.close_lid()
     mod.read(export_filename="csv_name_1.csv")
     mod_2.read(export_filename="csv_name_2.csv")
 
