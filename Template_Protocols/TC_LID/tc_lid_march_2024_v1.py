@@ -2,7 +2,7 @@ from typing import List, Dict, Any, Optional
 from opentrons.protocol_api import ProtocolContext, Labware
 
 metadata = {"protocolName": "Opentrons Tough Auto-Sealing Lid Test"}
-requirements = {"robotType": "Flex", "apiLevel": "2.21"}
+requirements = {"robotType": "Flex", "apiLevel": "2.22"}
 
 
 """

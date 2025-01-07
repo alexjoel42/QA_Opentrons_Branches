@@ -2,7 +2,7 @@ from typing import List, Dict, Any, Optional
 from opentrons.protocol_api import ProtocolContext, Labware
 
 metadata = {"protocolName": "Opentrons Flex Deck Riser with TC Lids Test"}
-requirements = {"robotType": "Flex", "apiLevel": "2.22"}
+requirements = {"robotType": "Flex", "apiLevel": "2.21"}
 
 
 """
@@ -21,11 +21,10 @@ Run:
 
 LID_STARTING_SLOT = "B2"
 LID_ENDING_SLOT = "C2"
-LID_COUNT = 5
+LID_COUNT = 3
 LID_DEFINITION = "opentrons_tough_pcr_auto_sealing_lid"
 LID_BOTTOM_DEFINITION = "opentrons_tough_pcr_auto_sealing_lid"
 DECK_RISER_NAME = "opentrons_flex_deck_riser"
-
 USING_THERMOCYCLER = True
 
 OFFSET_DECK = {
@@ -56,10 +55,9 @@ def _move_labware_with_offset_and_pause(
 
 def run(protocol: ProtocolContext):
     # SETUP
-    deck_riser_adapter = protocol.load_adapter("opentrons_flex_deck_riser", 'B2')
+    deck_riser_adapter = protocol.load_adapter(DECK_RISER_NAME, "B2")
 
     lids = [deck_riser_adapter.load_labware(LID_BOTTOM_DEFINITION)]
-    ''' 
     for i in range(LID_COUNT - 1):
         lids.append(lids[-1].load_labware(LID_DEFINITION))
     lids.reverse()  # NOTE: reversing to more easily loop through lids from top-to-bottom
@@ -67,17 +65,14 @@ def run(protocol: ProtocolContext):
         # TODO: confirm if we need to load 96-well adapter onto Thermocycler
         thermocycler = protocol.load_module("thermocyclerModuleV2")
         thermocycler.open_lid()
-        plate_in_cycler = thermocycler.load_labware(
-            "opentrons_96_wellplate_200ul_pcr_full_skirt"
-        )
+        plate_in_cycler = thermocycler.load_labware("armadillo_96_wellplate_200ul_pcr_full_skirt")
     else:
         plate_in_cycler = None
-    protocol.load_labware('opentrons_96_wellplate_200ul_pcr_full_skirt', 'C3')
 
     # RUN
     prev_moved_lid: Optional[Labware] = None
     for lid in lids:
-     
+
         if USING_THERMOCYCLER:
             _move_labware_with_offset_and_pause(
                 protocol,
@@ -86,10 +81,6 @@ def run(protocol: ProtocolContext):
                 pick_up_offset=OFFSET_DECK["pick-up"],
                 drop_offset=OFFSET_THERMOCYCLER["drop"],
             )
-            thermocycler.close_lid()
-            thermocycler.open_lid()
-
-
             _move_labware_with_offset_and_pause(
                 protocol,
                 lid,
@@ -97,8 +88,6 @@ def run(protocol: ProtocolContext):
                 pick_up_offset=OFFSET_THERMOCYCLER["pick-up"],
                 drop_offset=OFFSET_DECK["drop"],
             )
-            thermocycler.close_lid()
-            thermocycler.open_lid()
         else:
             _move_labware_with_offset_and_pause(
                 protocol,
@@ -108,4 +97,3 @@ def run(protocol: ProtocolContext):
                 drop_offset=OFFSET_DECK["drop"],
             )
         prev_moved_lid = lid
-        '''

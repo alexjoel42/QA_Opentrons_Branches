@@ -1,13 +1,15 @@
 from opentrons import protocol_api
 from opentrons.protocol_api import SINGLE, ALL
 
-requirements = {"robotType": "Flex", "apiLevel": "2.20"}
+requirements = {"robotType": "Flex", "apiLevel": "2.22"}
 
 def run(protocol: protocol_api.ProtocolContext):
     partial_rack_1 = protocol.load_labware(
         load_name="opentrons_flex_96_filtertiprack_50ul",
-        location="B2"
-    )
+        location="B2",
+        label="Supercalifragalisticexpialadocious If you had to pick a different name "
+              "for a tiprack that would be attrocious"
+              "The trick to knowing if bug RQA-3713 is affecting behavior as described must be noted")
 
 
     plate = protocol.load_labware(
@@ -15,8 +17,7 @@ def run(protocol: protocol_api.ProtocolContext):
         location = "C3"
     )
     pipette = protocol.load_instrument(
-        instrument_name="flex_8channel_50",
-        mount="right")
+        instrument_name="flex_96channel_1000")
 
     trash = protocol.load_trash_bin("A3")
 
@@ -38,7 +39,7 @@ def run(protocol: protocol_api.ProtocolContext):
     protocol.comment(str(pipette.active_channels))
     pipette.pick_up_tip()
     pipette.aspirate(6, plate["A1"])
-    print(pipette.get_current_volume())
+    #print(pipette.get_current_volume())
     pipette.dispense(6, plate["A1"])
 
     pipette.drop_tip()
