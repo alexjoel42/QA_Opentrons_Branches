@@ -22,7 +22,7 @@ def run(protocol: protocol_api.ProtocolContext):
     pipette.flow_rate.blow_out = 1
     pipette.pick_up_tip()
     pipette.aspirate(5, plate["A1"])
-    pipette.dispense(5, plate["B1"])
+    pipette.dispense(5, plate["A1"])
     pipette.blow_out()
     pipette.return_tip()
     pipette.pick_up_tip()
