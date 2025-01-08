@@ -10,7 +10,7 @@ def run(protocol: protocol_api.ProtocolContext):
     )
     trash = protocol.load_trash_bin("A3")
     pipette = protocol.load_instrument(
-        instrument_name="p1000_multi_em_flex",
+        instrument_name="flex_8channel_1000_em",
         mount="right"
     )
     pipette.configure_nozzle_layout(
