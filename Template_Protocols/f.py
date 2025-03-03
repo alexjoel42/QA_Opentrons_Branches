@@ -1,34 +1,41 @@
 from opentrons import protocol_api
-
 # metadata
 metadata = {
-    'protocolName': '96ch sanity check',
-    'author': 'Name <opentrons@example.com>',
-    'description': 'Simple protocol to get started using the OT-2',
+    'protocolName': 'multiple manual moves',
+    'author': 'Sara Kowalski',
+    'description': 'Simple Protocol that user can use to Phase 1 & 2 Error Recovery options for single and multi channel pipettes. NOTE: YOU WILL NEED A MODIFIED PIPETTE (NO SHROUD), and changed order of operations to reduce impact of dispense ER failure',
 }
-
 requirements = {
     "robotType": "Flex",
-    "apiLevel": "2.16",
+    "apiLevel": "2.22",
 }
-
-DRYRUN = 'YES'
-USE_GRIPPER = 'TRUE'
-
-# protocol run function
+DRYRUN = 'NO'
+USE_GRIPPER = True
 def run(protocol: protocol_api.ProtocolContext):
-    adapter1 = protocol.load_adapter("opentrons_flex_96_tiprack_adapter", "C3")
-    tiprack1 = adapter1.load_labware('opentrons_flex_96_tiprack_1000ul', 'C3')
-    p1000 = protocol.load_instrument('flex_96channel_1000', mount = 'left', tip_racks=[tiprack1])
-    sample_plate = protocol.load_labware('nest_12_reservoir_15ml','B2')
-    for i in range(3):
-        p1000.pick_up_tip()
-        p1000.aspirate(50, sample_plate['A1'])
-        p1000.dispense(50, sample_plate['A1'])
-        p1000.aspirate(66, sample_plate["A1"])
-        p1000.dispense(66, sample_plate['A1'])
-        p1000.return_tip()
-        p1000.reset_tipracks()
-
-    p1000.pick_up_tip()
-    p1000.return_tip()
+    # modules/fixtures
+    trashbin = protocol.load_waste_chute()
+    #modules
+    td_module = protocol.load_module("temperature module gen2", "D1")
+    td_adptr = td_module.load_adapter("opentrons_96_well_aluminum_block")
+    hs_module = protocol.load_module("heaterShakerModuleV1", "C1")
+    hs_adptr = hs_module.load_adapter("opentrons_96_pcr_adapter")
+    #labware
+    sample_plate = td_adptr.load_labware('armadillo_96_wellplate_200ul_pcr_full_skirt')
+    hs_module.open_labware_latch()
+    protocol.move_labware(
+        labware=sample_plate, 
+        new_location=hs_adptr, 
+    )
+    protocol.move_labware(
+        labware=sample_plate, 
+        new_location="C2", 
+    )
+    protocol.move_labware(
+        labware=sample_plate, 
+        new_location=td_adptr, 
+    )
+    protocol.move_labware(
+        labware=sample_plate, 
+        new_location="B2", 
+    )
+    hs_module.close_labware_latch()

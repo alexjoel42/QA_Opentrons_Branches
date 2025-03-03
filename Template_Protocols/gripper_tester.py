@@ -20,8 +20,17 @@ def run(protocol: protocol_api.ProtocolContext):
     protocol.move_labware(labware=plate, new_location="C2")
     protocol.move_labware(
         labware=tip_rack_1,
-        new_location="C3"
-    )  # two staging slots required
+        new_location="D2"
+    )
+    protocol.move_labware(
+        labware=tip_rack_1,
+        new_location="C2"
+    )
+    protocol.move_labware(
+        labware=tip_rack_1,
+        new_location="C2"
+    )
+
     pipette.pick_up_tip()
     pipette.aspirate(10, plate['A1'])
     pipette.return_tip()

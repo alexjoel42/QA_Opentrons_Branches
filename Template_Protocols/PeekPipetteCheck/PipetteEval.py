@@ -14,7 +14,7 @@ def run(protocol: protocol_api.ProtocolContext):
     trash = protocol.load_trash_bin("A3")
     pipette = protocol.load_instrument(
         instrument_name="flex_8channel_1000_em",
-        mount="right",
+        mount="left",
         tip_racks=[tiprack_1])
 
     pipette.flow_rate.aspirate = 400

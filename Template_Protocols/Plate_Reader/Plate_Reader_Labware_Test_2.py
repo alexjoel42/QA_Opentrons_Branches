@@ -14,7 +14,7 @@ def run(protocol: protocol_api.ProtocolContext):
         load_name="opentrons_flex_96_tiprack_1000ul",
         location="D2"
     )
-    trash = protocol.load_trash_bin("A3")
+    trash = protocol.load_waste_chute("A3")
     instrument = protocol.load_instrument(
         instrument_name="flex_8channel_1000",
         mount="right"
@@ -26,7 +26,7 @@ def run(protocol: protocol_api.ProtocolContext):
     )
 
     # plate_1 = protocol.load_labware("nest_96_wellplate_200ul_flat", "C1")
-    plate_1 = protocol.load_labware("corning_12_wellplate_6.9ml_flat", "C2")
+    plate_1 = protocol.load_labware("nest_96_wellplate_100ul_pcr_full_skirt", "C2")
     # plate_1 = protocol.load_labware("thermoscientificnunc_96_wellplate_2000ul", "C2")
 
     mod = protocol.load_module("absorbanceReaderV1", "B3")
@@ -34,6 +34,7 @@ def run(protocol: protocol_api.ProtocolContext):
     mod.open_lid()
     protocol.move_labware(plate_1, mod, use_gripper=True)
     protocol.move_labware(plate_1, trash, use_gripper=True)
+    print('potato')
 
     ''' 
     plate = protocol.load_labware("nest_96_wellplate_200ul_flat", "C2")

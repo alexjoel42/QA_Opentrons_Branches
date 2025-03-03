@@ -18,8 +18,8 @@ def run(protocol: ProtocolContext):
         "opentrons_96_wellplate_200ul_pcr_full_skirt"
     )
     trash = protocol.load_trash_bin('A3')
-    deck_riser_adapter = protocol.load_adapter("opentrons_flex_deck_riser", 'B2')
-    lids: List[Labware] = [deck_riser_adapter.load_labware(LID_BOTTOM_DEFINITION, 'D2')]
+    deck_riser_adapter = protocol.load_adapter("opentrons_flex_deck_riser", 'D1')
+    lids: List[Labware] = [deck_riser_adapter.load_labware(LID_BOTTOM_DEFINITION, 'D1')]
     for i in range(LID_COUNT - 1):
         lids.append(lids[-1].load_labware(LID_DEFINITION))
     lids.reverse()  # NOTE: reversing to more easily loop through lids from top-to-bottom

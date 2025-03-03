@@ -28,9 +28,9 @@ def run(protocol: ProtocolContext):
     )
     trash = protocol.load_trash_bin('A3')
     #pipette.aspirate(10, plate_in_cycler['A1'])
-    deck_riser_adapter = protocol.load_adapter("opentrons_flex_deck_riser", 'C4')
-    lids = [deck_riser_adapter.load_labware(LID_BOTTOM_DEFINITION)]
-    for i in range(LID_COUNT - 1):
+    morelids = protocol.load_labware(LID_BOTTOM_DEFINITION, 'D1')
+    lids = [morelids.load_labware(LID_BOTTOM_DEFINITION)]
+    for i in range(LID_COUNT - 2):
         lids.append(lids[-1].load_labware(LID_DEFINITION))
     lids.reverse()  # NOTE: reversing to more easily loop through lids from top-to-bottom
     i = 0
@@ -46,10 +46,9 @@ def run(protocol: ProtocolContext):
         if i == 0:
             protocol.move_labware(
                 lid,
-                "D1",
+                "D3",
                 use_gripper=True)
         else:
-            print("potato", i)
             protocol.move_labware(
                 lid,
                 lids[i-1],
