@@ -2,7 +2,7 @@ from opentrons import protocol_api
 
 # I am going to get added to in the test runner
 # uncomment to test
-# key = "10ul_C"
+key = "10ul_C"
 # key = "1100ul"
 # key = "210ul"
 # protocol.override_variable_name = key
