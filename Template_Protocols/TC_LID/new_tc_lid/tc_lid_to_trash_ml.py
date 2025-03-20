@@ -2,7 +2,7 @@ from typing import List
 from opentrons.protocol_api import ProtocolContext, Labware
 
 metadata = {"protocolName": "Opentrons Flex TC Lid Trash Test"}
-requirements = {"robotType": "Flex", "apiLevel": "2.20"}
+requirements = {"robotType": "Flex", "apiLevel": "2.23"}
 
 
 LID_COUNT = 5
@@ -25,14 +25,14 @@ def run(protocol: ProtocolContext):
     lids.reverse()  # NOTE: reversing to more easily loop through lids from top-to-bottom
 
     for lid in lids:
-        protocol.move_labware(
+        protocol.move_lid(
             lid,
             plate_in_cycler,
             use_gripper=True,
         )
         thermocycler.close_lid()
         thermocycler.open_lid()
-        protocol.move_labware(
+        protocol.move_lid(
             lid,
             trash,
             use_gripper=True,

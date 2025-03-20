@@ -235,7 +235,7 @@ def run(protocol_context):
                 new_tip = 'never'
                 ''' ) 
         protocol_context.pause(msg = 'Check if these are at least similar')
-        pipette.transfer_liquid(liquid_class = dilutent_LC, volume = diluent_volume, source = diluent, dest = dest, new_tip = 'never')
+        pipette.transfer_liquid( v = dilutent_LC, volume = diluent_volume, source = diluent, dest = dest, new_tip = 'never')
     pipette.drop_tip()
 
     # Dilution of samples across the 96-well flat bottom plate
