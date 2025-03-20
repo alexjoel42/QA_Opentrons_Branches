@@ -48,7 +48,7 @@ def get_dimensions_case_2(i):
 ## Actual code
 with  webdriver.Chrome() as driver:
     # Options for URL
-    driver.get("http://sandbox.labware.opentrons.com/labware-library@3.1.0-candidate-b/")
+    driver.get("http://sandbox.labware.opentrons.com/labware-library@3.2.0-alpha.0/#/")
     # todo Maybe this is a better alternative to "sleep"
     ## wait = WebDriverWait(driver, 15)
 

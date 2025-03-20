@@ -16,7 +16,7 @@ requirements = {
 
 # protocol run function
 def run(protocol: protocol_api.ProtocolContext):
-    mod = protocol.load_module("absorbanceReaderV1", "D3")
+    mod = protocol.load_module("absorbanceReaderV1", "C3")
     plate = protocol.load_labware("nest_96_wellplate_200ul_flat", "C2")
     tiprack_1000 = protocol.load_labware(load_name='opentrons_flex_96_tiprack_50ul', location="B2")
     trash_labware = protocol.load_trash_bin("A3")
