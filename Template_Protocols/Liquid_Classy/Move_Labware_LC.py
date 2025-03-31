@@ -1,237 +1,90 @@
 
-from opentrons import protocol_api
-
-# I am going to get added to in the test runner
-# uncomment to test
-# key = "10ul_C"
-# key = "1100ul"
-# key = "210ul"
-# protocol.override_variable_name = key
-
-from dataclasses import dataclass
+from typing import List
+from opentrons import protocol_api, types
+from opentrons.protocol_api import Labware
+from opentrons.protocol_api.module_contexts import (
+    FlexStackerContext,
+)
 
 
-@dataclass
-class Test:
-    key: str
-    tiprack_loadname: str
-    volume: float
-    deckslot: list
-
-
-"""
-deckslot dictionary of all deck slots
-"""
-
-
-Tests = [
-    Test(
-        key="1000tip",
-        tiprack_loadname="opentrons_flex_96_tiprack_1000ul",
-        volume=1000,
-        deckslot=[
-            "A1",
-            "A2",
-            "A3",
-            "A4",
-            "B1",
-            "B2",
-            "B3",
-            "B4",
-            "C1",
-            "C2",
-            "C3",
-            "C4",
-            "D1",
-            "D2",
-            "D3",
-            "D4",
-        ],
-    ),
-    Test(
-        key="300tip",
-        tiprack_loadname="opentrons_flex_96_tiprack_300ul",
-        volume=200,
-        deckslot=[
-            "A1",
-            "A2",
-            "A3",
-            "A4",
-            "B1",
-            "B2",
-            "B3",
-            "B4",
-            "C1",
-            "C2",
-            "C3",
-            "C4",
-            "D1",
-            "D2",
-            "D3",
-            "D4",
-        ],
-    ),
-    Test(key="50tip", tiprack_loadname="opentrons_flex_96_tiprack_50ul", volume=10, deckslot=[
-            "A1",
-            "A2",
-            "A3",
-            "A4",
-            "B1",
-            "B2",
-            "B3",
-            "B4",
-            "C1",
-            "C2",
-            "C3",
-            "C4",
-            "D1",
-            "D2",
-            "D3",
-            "D4",
-        ],),
-]
-
-
-def get_test(key):
-    matches = [test for test in Tests if test.key == key]
-    if not matches:
-        raise ValueError(f"No test found with key: {key}")
-    if len(matches) > 1:
-        raise ValueError(f"Multiple tests found with key: {key}")
-    return matches[0]
-
-
-requirements = {"robotType": "Flex", "apiLevel": "2.23"}
 metadata = {
-    "protocolName": "96 Channel distribute_liquid all custom tiprack types with all liquid classes"
+    "protocolName": "Switching tip rack",
+    "author": "QA team",
+}
+
+requirements = {
+    "robotType": "Flex",
+    "apiLevel": "2.23",
 }
 
 
-def comment_tip_rack_status(ctx, tip_rack):
-    """
-    Print out the tip status for each row in a tip rack.
-    Each row (A-H) will print the well statuses for columns 1-12 in a single comment,
-    with a '🟢' for present tips and a '❌' for missing tips.
-    """
-    range_A_to_H = [chr(i) for i in range(ord("A"), ord("H") + 1)]
-    range_1_to_12 = range(1, 13)
+#################
+### CONSTANTS ###
+#################
 
-    ctx.comment(f"Tip rack in {tip_rack.parent}")
+##############################
+# Runtime Parameters Support #
+##############################
 
-    for row in range_A_to_H:
-        status_line = f"{row}: "
-        for col in range_1_to_12:
-            well = f"{row}{col}"
-            has_tip = tip_rack.wells_by_name()[well].has_tip
-            status_emoji = "🟢" if has_tip else "❌"
-            status_line += f"{well} {status_emoji}  "
-
-        # Print the full status line for the row
-        ctx.comment(status_line)
+# -------------------------- #
+# Added in API version: 2.18 #
+# -------------------------- #
 
 
-def is_tip_rack_empty(tip_rack):
-    """
-    Check if a tip rack is completely empty.
-    Args:
-        tip_rack: An Opentrons tip rack labware object
-    Returns:
-        bool: True if the tip rack has no tips, False if it has at least one tip
-    """
-    range_A_to_H = [chr(i) for i in range(ord("A"), ord("H") + 1)]
-    range_1_to_12 = range(1, 13)
+def add_parameters(parameters: protocol_api.Parameters):
+    """This is the standard use of parameters"""
 
-    for row in range_A_to_H:
-        for col in range_1_to_12:
-            well = f"{row}{col}"
-            if tip_rack.wells_by_name()[well].has_tip:
-                return False
+    # We are using the defaults for every case.
+    # Other tests cover regression testing for
+    # other types of parameters and UI appearance
+    # there are many tests in Analyses Battery that cover errors and edge cases
+    parameters.add_str(
+        variable_name="pipette_name_left",
+        display_name="Pipette name to use",
+        description="Configuration of QA test to perform",
+        choices=[{"display_name": "flex_96channel_1000", "value": "flex_96channel_1000"},
+                 {"display_name": "flex_8_channel_1000", "value": "flex_8_channel_1000"},
+                 {"display_name": "flex_8_channe_50ul", "value": "flex_8_channe_50ul"}],
+        default="flex_96channel_1000",
 
-    return True
+        )
 
-
-def is_missing_tips(tip_rack):
-    """
-    Check if a tip rack is missing any tips.
-    Args:
-        tip_rack: An Opentrons tip rack labware object
-    Returns:
-        bool: True if the tip rack is missing at least one tip, False if all tips are present
-    """
-    range_A_to_H = [chr(i) for i in range(ord("A"), ord("H") + 1)]
-    range_1_to_12 = range(1, 13)
-
-    for row in range_A_to_H:
-        for col in range_1_to_12:
-            well = f"{row}{col}"
-            if not tip_rack.wells_by_name()[well].has_tip:
-                return True
-
-    return False
-
-
-def using_96_channel(ctx) -> bool:
-    """Check if a 96-channel pipette is loaded in the protocol."""
-    for instrument in ctx.loaded_instruments.values():
-        if instrument.channels == 8:
-            ctx.comment("8 channel pipette is loaded")
-            return True
-    return False
-
-
-def load_off_deck_tipracks(ctx, tiprack_loadname, count):
-    tipracks = []
-    for i in range(count):
-        tiprack = ctx.load_labware(tiprack_loadname, protocol_api.OFF_DECK)
-        tipracks.append(OffDeckTiprack(tiprack))
-    return tipracks
-
-
-@dataclass
-class OffDeckTiprack:
-    tiprack: protocol_api.labware.Labware
-    used: bool = False
-
-
-def run(ctx: protocol_api.ProtocolContext):
-    # Stock liquid classes
-    test = get_test(key="1000tip")
-    comment = f"Test: {test.key}, Tiprack: {test.tiprack_loadname}, Volume: {test.volume}, Deck Slots: {test.deckslot[1:]}"
-    ctx.comment(comment)
-    water_class = ctx.define_liquid_class("water")
-    ethanol_class = ctx.define_liquid_class("ethanol_80")
-    glycerol_class = ctx.define_liquid_class("glycerol_50")
-    tiprack_1 = ctx.load_labware(test.tiprack_loadname, "A1")
-    target = ctx.load_labware("nest_96_wellplate_2ml_deep", "A2")
-    water_source_1 = ctx.load_labware("nest_1_reservoir_290ml", "B1", "water")
+   
+import itertools
+def run(ctx: protocol_api.ProtocolContext) -> None:
     waste_chute = ctx.load_waste_chute()
-    pipette_8 = ctx.load_instrument(instrument_name="flex_8channel_1000",mount="left", tip_racks=[tiprack_1])
-    DEST_WELL = 'A1'
-    # Liquids to transfer
-    # https://labware.opentrons.com/#/?loadName=nest_1_reservoir_290ml
-    '''
-    Define Liquid class as water and then turn this into a for loop
-    '''
-    SOURCE_WELL = "A1"  
-    water = ctx.define_liquid(name="Aqueous", description="H₂O", display_color="#738ee6")
-    water_source_1.wells_by_name()[SOURCE_WELL].load_liquid(liquid=water, volume=1000)
-    # Target
-    # https://labware.opentrons.com/#/?loadName=nest_96_wellplate_2ml_deep    TARGET_WELL = "A1"  
-
-    pipette_8.transfer_liquid(
-		liquid_class=water_class,
-		volume=100,
-		source=water_source_1[SOURCE_WELL],
-		dest=target[DEST_WELL],
-		new_tip="once",
-		trash_location= waste_chute,
-	)
-    ctx.move_labware()
-
-
+    
+    
+    
+    if ctx.params.pipette_name_left == 'flex_96channel_1000' or ctx.params.pipette_name_right == 'flex_96channel_1000':
+        my_adapter_50 = ctx.load_adapter("opentrons_flex_96_tiprack_adapter", 'A2')
+        tip_rack_50 = my_adapter_50.load_labware("opentrons_flex_96_tiprack_50ul")
+        my_adapter_50_second = ctx.load_adapter("opentrons_flex_96_tiprack_adapter", 'B2')
+        tip_rack_200 = my_adapter_50_second.load_labware("opentrons_flex_96_tiprack_200ul")
+        tip_racks =[tip_rack_50,tip_rack_200 ]
+        pipette_left = ctx.load_instrument('flex_96channel_1000', mount = 'left', tip_racks = tip_racks)
+        pipette_left.trash_container = waste_chute
+    else:
+        pipette_left = ctx.load_instrument(ctx.params.pipette_name_left, mount = 'left', tip_racks =tip_racks)
+        chute = ctx.load_waste_chute()
+    water_class = ctx.define_liquid_class("water")
+    glycerol_50 = ctx.define_liquid_class("glycerol_50")
+    ethanol_80 = ctx.define_liquid_class("ethanol_80")
+    classy = [water_class,glycerol_50, ethanol_80 ]
+    plate_1 = ctx.load_labware('opentrons_96_wellplate_200ul_pcr_full_skirt','B3' )
+    plate_2 = ctx.load_labware('opentrons_96_wellplate_200ul_pcr_full_skirt', 'C3')
+    for i in range(8):
+        pipette_left.transfer_liquid(volume = 50, source = plate_1['A1'], dest=plate_2['A1'], liquid_class =classy[2], new_tip = 'once')
     ''' 
-    I want to use move the target well loaded in D2 to A1->D4 and test transfer_lidquid within a for loop that loops
-    each of the different liquid types.
+    pipette_left.transfer_liquid(volume = 200, source = plate_1['A1'], dest=plate_2['A1'], liquid_class =classy[3], new_tip = 'once')
+    pipette_left.transfer_liquid(volume = 200, source = plate_1['A1'], dest=plate_2['A1'], liquid_class =classy[3], new_tip = 'always')
     
-    
+
+
     '''
+
+
+   
+
+
+
