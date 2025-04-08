@@ -4,7 +4,7 @@ import numpy
 
 
 metadata = {
-    'protocolName': 'Twist Library Preparation with Enzymatic Fragmention 2.0, tip track',
+    'protocolName': 'Twist Library Preparation with Enzymatic Fragmention 2.0 MODIFICATOIN',
     'author': 'DAndra Howell <dandra.howell@opentrons.com>',
     'source': 'Protocol Library',
     }
@@ -324,22 +324,19 @@ def run(ctx):
     FRERAT_lc= ctx.define_liquid_class("water")
     #p50_samples_props = samples_lc(p50,  p50_racks_ondeck)
     iterator = 0
-
+   
     for a in range(Columns):
+        tiptrack(tip50) 
+        p50.pick_up_tip()
         if iterator ==0: 
-            tiptrack(tip50) 
+            
             p50_ferat_props = FRERAT_lc.get_for(p50,  p50_racks_ondeck[0])
             p50_ferat_props.aspirate.position_reference = "well-top"
             p50_ferat_props.aspirate.offset = (0,0,-14.5)
-            # p50_ferat_props.aspirate.delay.enable = True
             p50_ferat_props.aspirate.delay.duration = 3
-            # p50_ferat_props.dispense.pushOutByVolume = 0
-            print(dir(p50_ferat_props.dispense.push_out_by_volume), 'potato')
-            # 14.95 
-            p50.pick_up_tip()
-            p50.transfer_liquid(liquid_class = FRERAT_lc, volume = 10, source = FRERAT, dest = samples[a],new_tip ='Never')
-            drop_tip(p50)
-            
+           
+            p50.transfer_liquid(liquid_class = FRERAT_lc, volume = 10, source = FRERAT.parent.columns_by_name()['1'], dest = samples[a].parent.columns_by_name()['1'],new_tip ='Never')
+          
 
             ''' 
             p50.aspirate(10,FRERAT.bottom(.4))
@@ -347,14 +344,13 @@ def run(ctx):
             p50.dispense(10,samples[a],push_out=0)
             p50.blow_out(samples[a].top(-10))
             mix(20,40,samples[a])
-            drop_tip(p50)
             '''
             iterator = 1 
         else:
             tiptrack(tip50) 
             p50.pick_up_tip()
             p50.transfer_liquid(liquid_class = FRERAT_lc, volume = 10, Source = FRERAT, sdest = samples[a],new_tip ='Never')
-            drop_tip(p50)
+        drop_tip(p50)
 
     if on_deck_thermo==True:
         thermocycler.close_lid()
@@ -382,10 +378,11 @@ def run(ctx):
     adapter_vol_LC = ctx.define_liquid_class("water")
     incrementer = 0 
     for b in range(Columns):
+        tiptrack(tip50)
+        p50.pick_up_tip()
         if incrementer > 0:
             # p50_adapter_props = adapter_vol_LC(p50,  p50_racks_ondeck) --> this is the actual object 
             p50_adapter_props = adapter_vol_LC.get_for(p50,  p50_racks_ondeck)
-            tiptrack(tip50)
             p50_adapter_props.aspirate.position_reference = "well-top"
             p50_adapter_props.aspirate.offset = (0, 0, -37.5)
             p50_adapter_props.aspirate.delay.enable = True
@@ -394,37 +391,35 @@ def run(ctx):
             p50_adapter_props.dispense.push_out = 0
             p50.adapter_props.dispense.blowout = True
             p50.adapter_props.dispense.blowout.location = 'destination'
-            p50.pick_up_tip()
-            p50.transfer_liquid(volume = Adap_Vol, source= Adapter, dest = samples[b], new_tip = 'never', liquid_class = adapter_vol_LC)
-            drop_tip(p50)
+            p50.transfer_liquid(volume = Adap_Vol, source= Adapter.parent.columns()[1], dest = samples[b], new_tip = 'never', liquid_class = adapter_vol_LC)
         else:
-            tiptrack(tip50)
-            p50.pick_up_tip()
-            p50.transfer_liquid(volume = Adap_Vol, source= Adapter, dest = samples[b], new_tip = 'never', liquid_class = adapter_vol_LC)
-            drop_tip(p50)
+            p50.transfer_liquid(volume = Adap_Vol, source= Adapter.parent.columns()[1], dest = samples[b].parent.columns()[0], new_tip = 'never', liquid_class = adapter_vol_LC)
         incrementer = incrementer +1 
+        drop_tip(p50)
         ''' 
-        p50.pick_up_tip()
         p50.aspirate(Adap_Vol,Adapter.bottom(.4))
         ctx.delay(seconds=3)
         p50.dispense(Adap_Vol,samples[b].bottom(z=.4),push_out=0)
         p50.blow_out(samples[b].top(-10))
         #mix(5,45,samples[b])
-        drop_tip(p50)
         '''
     incrementer = 0
-        
-       
+    LIG_LC= ctx.define_liquid_class("water")
     #Adding LIG MM
     for c in range(Columns):
         tiptrack(tip50)
         p50.pick_up_tip()
+        p50.transfer_liquid(volume = 20, liquid_class =LIG_LC, source = LIG.parent.columns_by_name()['2'], dest =samples[c].parent.columns_by_name()[str(c+1)] , new_tip = 'never')
+        drop_tip(p50)
+        ''' 
+
         p50.aspirate(20, LIG.bottom(.4))
         ctx.delay(seconds=3)
         p50.dispense(20,samples[c],push_out=0)
         p50.blow_out(samples[c].top(-10))
         mix(15,50,samples[c])
-        drop_tip(p50)
+   
+        '''
 
     if on_deck_thermo==True:
         ctx.move_labware(sample_plate_1,'D1',use_gripper=True)
@@ -467,23 +462,37 @@ def run(ctx):
     p1000.flow_rate.aspirate=140
     p1000.flow_rate.dispense=100
     #Adding Ampure to NA
+    Ampure_LC = ctx.define_liquid_class('glycerol_50')
+    ctx.pause(msg = '')
     for d in range(Columns):
         tiptrack(tip200)
         p1000.pick_up_tip()
+        p1000.transfer_liquid(volume = 60, liquid_class =  Ampure_LC,  source = AMPure.parent.columns_by_name()['1'], dest = AMPure.parent.columns_by_name()['1'] , new_tip = 'never')
+        drop_tip(p1000)
+
+        
+        '''
         p1000.aspirate(60,AMPure.bottom(z=.4))
         ctx.delay(seconds=3)
         p1000.dispense(60, samples[d],push_out=0)
         p1000.blow_out(samples[d].top(-4))
         p1000.mix(15,120,samples[d].bottom(1))
         p1000.blow_out(samples[d].top(-4))
-        drop_tip(p1000)
+        ''' 
     ctx.delay(minutes=5)
     ctx.move_labware(sample_plate_1,mag_block,use_gripper=True)
     ctx.delay(minutes=4)
-    for e in range(Columns): #Removing Sup
+    Samples_LC = ctx.define_liquid_class("water")
+    for e in range(Columns): #Remove Sup
+        ctx.comment('No waste chute dispense')
         tiptrack(tip200)
-        # 
-        # p1000.transfer_liquid(volume = 125, source = samples[e], dest = chute)
+        p1000.pick_up_tip()
+        p1000.flow_rate.aspirate=100
+        p1000.aspirate(95,samples[e+4].bottom(.4))
+        ctx.delay(seconds=3)
+        p1000.dispense(95,chute)
+        drop_tip(p1000)
+        p1000.flow_rate.aspirate=140
         p1000.pick_up_tip()
         p1000.flow_rate.aspirate=100
         p1000.aspirate(125,samples[e].bottom(.6))
@@ -491,24 +500,27 @@ def run(ctx):
         p1000.dispense(125,chute)
         p1000.flow_rate.aspirate=140
         drop_tip(p1000)
+
     #ETOH washes
     for z in range(2):
         for x in range(Columns): #adding EtOH
             # Not doing location
-            p1000.transfer_liquid(liquid_class = EtOH_LC, volume = 180, source= ETOH[x], dest = samples[x])
-            # liquid_1_p50_props = EtOH_LC.get_for(pipette1000, tiprack200)
             tiptrack(tip200)
-            ''' 
             p1000.pick_up_tip()
+            p1000.transfer_liquid(liquid_class = EtOH_LC, volume = 180, source= ETOH[x].parent.columns_by_name()['3'], dest = samples[x].parent.columns_by_name()['3'], new_tip = 'Never')
+            drop_tip(p1000)
+            # liquid_1_p50_props = EtOH_LC.get_for(pipette1000, tiprack200)
+            ''' 
+    
             p1000.aspirate(180, ETOH[x])
             p1000.dispense(180, samples[x].top(-3))
-            drop_tip(p1000)
+      
             '''
         ctx.delay(seconds=30)
         for x in range(Columns): #remove EtOH
             tiptrack(tip200)
             #p1000.transfer_liquid(liquid_class = EtOH_LC, volume = 180, source= samples[x], dest = chute, new_tip= 'Once')
-            
+            ctx.comment(msg = "We don't transfer liquids to a waste chut")
             p1000.pick_up_tip()
             p1000.aspirate(85,samples[x].bottom(z=6))
             p1000.aspirate(95,samples[x])
@@ -517,6 +529,7 @@ def run(ctx):
             drop_tip(p1000)
     for x in range(Columns): #remove residual liquid
         tiptrack(tip50)
+        ctx.comment(msg = "We don't transfer liquids to a waste chut")
         p50.pick_up_tip()
         p50.aspirate(50,samples[x].bottom(.4))
         p50.dispense(50,chute)
@@ -528,9 +541,9 @@ def run(ctx):
     ## Setting RSB liquid class settings for RSB
     RSB_LC = ctx.define_liquid_class("glycerol_50")
     RSB_LC_config = RSB_LC.get_for(p50, p50_racks_ondeck[0])
-
-    RSB_LC_config.aspirate.submerge.offset =(0,0,0.5)
-    RSB_LC_config.dispense.submerge.offset =(0,0,0.5)
+    #RSB_LC_config.aspirate.submerge.offset =(0,0,0.5)
+    # RSB_LC_config.dispense.submerge.offset =(0,0,0.5)
+ 
     RSB_LC_config.dispense.mix.enabled = True 
     RSB_LC_config.dispense.mix.repetitions = 20
     RSB_LC_config.dispense.mix.volume = 15
@@ -545,20 +558,20 @@ def run(ctx):
     
     '''    
     RSB_LC_config = RSB_LC.get_for(p50, p50_racks_ondeck[0])
+
     for x in range(Columns):
         tiptrack(tip50)
         p50.pick_up_tip()
         ctx.comment('Please see that we have a mix after')
-        p50.transfer_liquid(volume = 17, source = RSB, dest = samples[x], liquid_class = RSB_LC, new_tip = 'never')
+        p50.transfer_liquid(volume = 17, source = RSB.parent.columns_by_name()['2'], dest = samples[x].parent.columns_by_name()['1'], liquid_class = RSB_LC, new_tip = 'never')
         drop_tip(p50)
         
         ''' 
-        p50.pick_up_tip()
         p50.aspirate(17,RSB.bottom(.4))
         p50.dispense(17,samples[x].bottom(.5),push_out=0)
         p50.blow_out(samples[x].top(-10))
         mix(20,15,samples[x])
-        drop_tip(p50)'
+
         '''
     ctx.delay(minutes=2)
     ctx.move_labware(sample_plate_1, mag_block,use_gripper=True)
@@ -569,28 +582,30 @@ def run(ctx):
     
 
     for x in range(Columns):
+        tiptrack(tip50)
+        p50.pick_up_tip()
+
         if iterator == 0:
             Samples_LC_config = Samples_LC.get_for(p50, p50_racks_ondeck[0])
             Samples_LC_config.aspirate.submerge.offset =(0,0,0.4)
-            tiptrack(tip50)
-            p50.pick_up_tip()
-            p50.transfer_liquid(volume = 15, source = samples[x], dest = samples[x+4], liquid_class = Samples_LC, new_tip ='never')
-            drop_tip(p50)
+            p50.transfer_liquid(volume = 15, source = samples[x].parent.columns_by_name()['1'], dest = samples[x+4].parent.columns_by_name()['5'], liquid_class = Samples_LC, new_tip ='never')            
+       
             iterator = iterator + 1
         else:
             tiptrack(tip50)
-            p50.pick_up_tip()
-            p50.transfer_liquid(volume = 15, source = samples[x], dest = samples[x+4], liquid_class = Samples_LC, new_tip ='never')
-            drop_tip(p50)
+            p50.transfer_liquid(volume = 15, source = samples[x].parent.columns_by_name()['1'], dest = samples[x+4].parent.columns_by_name()['5'], liquid_class = Samples_LC, new_tip ='never')
+  
             '''
-            tiptrack(tip50)
-            p50.pick_up_tip()
+            
+  
             p50.aspirate(15, samples[x].bottom(z=.4))
             p50.dispense(15, samples[x+4])
-            drop_tip(p50)
+         
             
             
             '''
+        drop_tip(p50)
+    
         
 
     #Amplification
@@ -601,9 +616,10 @@ def run(ctx):
             thermocycler.set_lid_temperature(105)
 
     ''' 
-    Keep as is 
+    Keep as is because it's poking holes 
     '''
-    for x in range(Columns): #Poke holes and aspirate
+
+    for x in range(Columns): #Poke holes and aspirate 
         tiptrack(tip200)
         p1000.pick_up_tip()
         p1000.move_to(Primers[x].top(-10))
@@ -620,15 +636,30 @@ def run(ctx):
     ## Define PCR 
 
     # PCR_LC = 
+    PCR_LC = ctx.define_liquid_class('glycerol_50')
+    PCR_LC_props = PCR_LC.get_for(p50,p50_racks_ondeck[0])
+    PCR_LC_props.dispense.push_out_by_volume.as_dict() == {
+        25: 0
+    }
+    PCR_LC_props.dispense.mix.enabled = True 
+    PCR_LC_props.dispense.mix.repetitions = 20
+    PCR_LC_props.dispense.mix.volume = 15
+
     for z in range(Columns):
         #Adding Amp Mix
-        tiptrack(tip50)
         p50.pick_up_tip()
+        tiptrack(tip50)
+
+        p50.transfer_liquid(volume = 25, liquid_class = PCR_LC, source = PCR.parent.columns()[3], dest = sample_plate_1.columns()[4], new_tip = 'Never')
+        drop_tip(p50)
+        '''' 
+
         p50.aspirate(25,PCR.bottom(.4))
         ctx.delay(seconds=3)
         p50.dispense(25,samples[z+4],push_out=0)
-        mix(20,40,samples[z+4])
-        drop_tip(p50)
+        mix(20,40,samples[z+4])'
+
+        '''
     if on_deck_thermo==True:
         #Thermocycler Program
         if DryRun == False:
@@ -662,10 +693,10 @@ def run(ctx):
     ###############################################################################################################################
     if on_deck_thermo==True:
         ctx.move_labware(sample_plate_1,'D1',use_gripper=True)
+    
+  
     tiptrack(tip200)
     p1000.pick_up_tip()
-    p1000.flow_rate.aspirate=3000
-    p1000.flow_rate.dispense=3000
     p1000.mix(30,55*Columns,AMPure)
     ctx.delay(seconds=3)
     p1000.blow_out(AMPure.bottom(12))
@@ -676,13 +707,20 @@ def run(ctx):
     for d in range(Columns):
         tiptrack(tip200)
         p1000.pick_up_tip()
+        p1000.transfer_liquid(volume = 50, liquid_class = Ampure_LC, source = AMPure.parent.columns_by_name()['1'], dest =sample_plate_1.columns()[d+4], new_tip = 'never' )
+        p1000.mix(15,90,samples[d+4])
+        p1000.blow_out(samples[d+4].top(-4))
+        drop_tip(p1000)
+  
+        ''' 
         p1000.aspirate(50,AMPure.bottom(z=.4))
         ctx.delay(seconds=3)
         p1000.dispense(50, samples[d+4],push_out=0)
         p1000.blow_out(samples[d+4].top(-4))
         p1000.mix(15,90,samples[d+4])
         p1000.blow_out(samples[d+4].top(-4))
-        drop_tip(p1000)
+      
+        '''
     ctx.delay(minutes=5)
     ctx.move_labware(sample_plate_1,mag_block,use_gripper=True)
     ctx.delay(minutes=3)
@@ -695,52 +733,6 @@ def run(ctx):
         p1000.dispense(95,chute)
         drop_tip(p1000)
         p1000.flow_rate.aspirate=140
-    #ETOH washes
-    for z in range(2):
-        for x in range(Columns): #adding EtOH
-            tiptrack(tip200)
-            p1000.pick_up_tip()
-            p1000.aspirate(180, ETOH[x])
-            p1000.dispense(180, samples[x+4].top(-3))
-            drop_tip(p1000)
-        ctx.delay(seconds=30)
-        for x in range(Columns): #remove EtOH
-            tiptrack(tip200)
-            p1000.pick_up_tip()
-            p1000.aspirate(85,samples[x+4].bottom(z=6))
-            p1000.aspirate(95,samples[x+4].bottom(.5))
-            p1000.dispense(180,chute)
-            drop_tip(p1000)
-    for x in range(Columns): #remove residual liquid
-        tiptrack(tip50)
-        p50.pick_up_tip()
-        p50.aspirate(50,samples[x+4].bottom(.3))
-        p50.dispense(50,chute)
-        drop_tip(p50)
-    ctx.delay(minutes=2.5)
-    ctx.move_labware(sample_plate_1,'D1',use_gripper=True)
-    for x in range(Columns):
-        tiptrack(tip50)
-        p50.pick_up_tip()
-        p50.aspirate(22,RSB.bottom(.4))
-        p50.dispense(22,samples[x+4].bottom(.5),push_out=0)
-        p50.blow_out(samples[x+4].top(-10))
-        mix(20,18,samples[x+4])
-        drop_tip(p50)
-    ctx.delay(minutes=2)
-    ctx.move_labware(sample_plate_1, mag_block,use_gripper=True)
-    ctx.delay(minutes=2.5)
-    for x in range(Columns):
-        tiptrack(tip50)
-        p50.pick_up_tip()
-        p50.aspirate(20, samples[x+4].bottom(z=.5))
-        ctx.delay(seconds=3)
-        p50.dispense(20, samples[x+8])
-        drop_tip(p50)
-    if on_deck_thermo==True:
-        thermocycler.deactivate_lid()
-        thermocycler.deactivate_block()
-    temp_block.deactivate()
     ctx.home()
 
     #                                           Liquids Definitions and Assignments

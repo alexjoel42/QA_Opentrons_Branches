@@ -95,6 +95,9 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
     ################
 
     waste_chute = ctx.load_waste_chute()
+    WELL_PLATE_STARTING_POSITION = "C2"
+    RESERVOIR_STARTING_POSITION = "D2"
+
 
     ###############
     ### MODULES ###
@@ -105,27 +108,19 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
     heater_shaker = ctx.load_module(HEATER_SHAKER_NAME, "C1")
     temperature_module = ctx.load_module(TEMPERATURE_MODULE_NAME, "D1")
     absorbance_module = ctx.load_module(ABSORBANCE_READER, "B3")
-    lids = ctx.load_lid_stack(load_name = TC_LID, location =  "C4", quantity = 5, adapter = DECK_RISER_NAME)
+    lids = ctx.load_lid_stack(load_name = TC_LID, location =  "A4", quantity = 5, adapter = DECK_RISER_NAME)
     thermocycler.open_lid()
     heater_shaker.close_labware_latch()
     absorbance_module.close_lid()
     absorbance_module.initialize("single", [600], 450)
     absorbance_module.open_lid()
 
-    stacker: FlexStackerContext = ctx.load_module(
-        "flexStackerModuleV1", "A4"
-    )  # type: ignore[assignment]
-    stacker.set_stored_labware(
-        load_name="opentrons_flex_96_tiprack_200ul",
-        count=6,
-        lid="opentrons_flex_tiprack_lid",
-    )
-
-
 
     #######################
     ### MODULE ADAPTERS ###
     #######################
+    dest_pcr_plate = ctx.load_labware(ctx.params.well_plate_name, WELL_PLATE_STARTING_POSITION)
+
 
     temperature_module_adapter = temperature_module.load_adapter(TEMPERATURE_MODULE_ADAPTER_NAME)
     heater_shaker_adapter = heater_shaker.load_adapter(HEATER_SHAKER_ADAPTER_NAME)
@@ -133,55 +128,10 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
     mag_plate = magnetic_block.load_labware('nest_96_wellplate_2ml_deep')
     Temp_Plate = adapters[0].load_labware('opentrons_96_wellplate_200ul_pcr_full_skirt')
     HS_Plate = adapters[1].load_labware('opentrons_96_wellplate_200ul_pcr_full_skirt')
-    TC_Plate = thermocycler.load_labware('opentrons_96_wellplate_200ul_pcr_full_skirt')
-    # tip_adapter = ctx.load_adapter(TIPRACK_96_ADAPTER_NAME, "A2")
-    deck_slots_racks = ['A2', 'C2', 'B2']
-    tip_racks =[]
-    for slot in deck_slots_racks:
-        if slot == 'A2':
-            my_adapter_50_A2= ctx.load_adapter("opentrons_flex_96_tiprack_adapter", slot)
-            tip_racks.append(my_adapter_50_A2.load_labware("opentrons_flex_96_tiprack_50ul"))
-        else:
-             my_adapter_50 = ctx.load_adapter("opentrons_flex_96_tiprack_adapter", slot)
-             tip_racks.append(my_adapter_50.load_labware("opentrons_flex_96_tiprack_50ul"))
-        
-        
-    pipette_96_channel = ctx.load_instrument(PIPETTE_96_CHANNEL_NAME, mount="left", tip_racks=tip_racks, liquid_presence_detection=True)
-    pipette_96_channel.trash_container = waste_chute
-    water_class = ctx.define_liquid_class("water")
-    glycerol_50 = ctx.define_liquid_class("glycerol_50")
-    ethanol_80 = ctx.define_liquid_class("ethanol_80")
-    classy = [water_class,glycerol_50, ethanol_80 ]
-    Module_Labware =  [mag_plate, Temp_Plate, HS_Plate, TC_Plate]
-    #pipette_96_channel.pick_up_tip()
-    generate_labware_transfers(pipette_96_channel, Module_Labware,classy)
-    stacker_rack = stacker.retrieve()
-    tip_racks.append(stacker_rack)
-    ctx.move_labware(tip_racks[0], waste_chute)
-    ctx.move_labware(stacker_rack, my_adapter_50_A2)
-    #pipette_96_channel.pick_up_tip()
-    for LC in classy:
-        pipette_96_channel.consolidate_liquid(volume= 10, source = [Module_Labware[1]['A1'], Module_Labware[2]['A1'], Module_Labware[3]['A1']], dest = Module_Labware[0]['A1'], liquid_class = LC, new_tip = 'Once' )
-    # pipette_96_channel.drop_tip()
-    pipette_96_channel.transfer_liquid(volume = 200, source =Module_Labware[0]['A1'] , dest = Module_Labware[1]['A1'], liquid_class = water_class , new_tip ='Once')
+    ctx.move_labware(dest_pcr_plate, thermocycler, use_gripper=True)
+
+    
+    ctx.move_lid(source_location=lids, new_location=dest_pcr_plate, use_gripper=True)
 
 
-
-   
-
-
-    ''' 
-    for i in range(0,2):
-
-        pipette_96_channel.transfer_liquid(volume = 1, source = Source_Labware[0]['A1'], dest = Destination_Labware[0], liquid_class= classy[0])
-        pipette_96_channel.transfer_liquid(volume = 1, source = Source_Labware[0]['A1'], dest = Destination_Labware[0], liquid_class= classy[0])
-
-    '''
-
-def generate_labware_transfers(pipette, Module_Labware, classy):
-    """Generates all permutations of liquid transfers between two labware."""
-    pipette.pick_up_tip()
-    for source_labware, dest_labware in itertools.permutations(Module_Labware, 2):
-        for LC in classy:
-            pipette.transfer_liquid(volume = 1, source =source_labware['A1'] , dest = dest_labware['A1'], liquid_class =LC, new_tip ='never')
-    pipette.return_tip()
+  

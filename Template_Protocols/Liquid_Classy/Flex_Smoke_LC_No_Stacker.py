@@ -1,13 +1,6 @@
 #############
 # CHANGELOG #
 #############
-####
-# ----
-# 2.23
-# ----
-
-# - - Liquid Classes and stacker 
-
 
 # ----
 # 2.21
@@ -73,13 +66,10 @@
 from typing import List
 from opentrons import protocol_api, types
 from opentrons.protocol_api import Labware
-from opentrons.protocol_api.module_contexts import (
-    FlexStackerContext,
-)
 
 
 metadata = {
-    "protocolName": "STACKER Flex Smoke Test - v2.23",
+    "protocolName": "Flex Smoke Test - v2.23 8.4.0",
     "author": "QA team",
 }
 
@@ -127,7 +117,6 @@ TIPRACK_96_NAME = "opentrons_flex_96_tiprack_1000ul"
 PIPETTE_96_CHANNEL_NAME = "flex_96channel_1000"
 WELL_PLATE_STARTING_POSITION = "C2"
 RESERVOIR_STARTING_POSITION = "D2"
-FLEX_STACKER = "flexStackerModuleV1"
 
 
 def comment_tip_rack_status(ctx, tip_rack):
@@ -139,7 +128,7 @@ def comment_tip_rack_status(ctx, tip_rack):
     range_A_to_H = [chr(i) for i in range(ord("A"), ord("H") + 1)]
     range_1_to_12 = range(1, 13)
 
-    ctx.comment(f"Tip rack in {tip_rack.parent}") 
+    ctx.comment(f"Tip rack in {tip_rack.parent}")
 
     for row in range_A_to_H:
         status_line = f"{row}: "
@@ -217,27 +206,12 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
     temperature_module = ctx.load_module(TEMPERATURE_MODULE_NAME, "D1")
     absorbance_module = ctx.load_module(ABSORBANCE_READER, "B3")
     lids = ctx.load_lid_stack(load_name = TC_LID, location =  "A4", quantity = 5, adapter = DECK_RISER_NAME)
-
-    ''' 
-    load_name: str,
-    location: DeckLocation | Labware,
-    quantity: int,
-    adapter: str | None = None,
-    namespace: str | None = None,
-    version: int | None = None
-    
-    '''
-    # deck_riser_adapter = ctx.load_adapter(DECK_RISER_NAME, "A4")
-
-    #  lid = protocol.load_lid_stack(LID_DEFINITION, "A2", 5, adapter =DECK_RISER_NAME )
-
     thermocycler.open_lid()
     heater_shaker.open_labware_latch()
     absorbance_module.close_lid()
     absorbance_module.initialize("single", [600], 450)
     absorbance_module.open_lid()
 
-  
     #######################
     ### MODULE ADAPTERS ###
     #######################
@@ -245,7 +219,6 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
     temperature_module_adapter = temperature_module.load_adapter(TEMPERATURE_MODULE_ADAPTER_NAME)
     heater_shaker_adapter = heater_shaker.load_adapter(HEATER_SHAKER_ADAPTER_NAME)
     adapters = [temperature_module_adapter, heater_shaker_adapter]
-    tip_adapter = ctx.load_adapter(TIPRACK_96_ADAPTER_NAME, "A2")
 
     ###############
     ### LABWARE ###
@@ -255,22 +228,15 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
     source_reservoir = ctx.load_labware(ctx.params.reservoir_name, RESERVOIR_STARTING_POSITION)
     dest_pcr_plate = ctx.load_labware(ctx.params.well_plate_name, WELL_PLATE_STARTING_POSITION)
 
+    tip_rack_1 = ctx.load_labware(TIPRACK_96_NAME, "A2", adapter=TIPRACK_96_ADAPTER_NAME)
+    tip_rack_adapter = tip_rack_1.parent
+
+    tip_rack_2 = ctx.load_labware(TIPRACK_96_NAME, "C3")
+    tip_rack_3 = ctx.load_labware(TIPRACK_96_NAME, "C4")
     tip_rack_5 = ctx.load_labware(TIPRACK_96_NAME, protocol_api.OFF_DECK)
+    tip_rack_6 = ctx.load_labware(TIPRACK_96_NAME, protocol_api.OFF_DECK)
 
-    #########################
-    #### STACKER LABWARE ####
-    #########################
-    tip_racks = []
-
-    stacker.set_stored_labware(
-        load_name=TIPRACK_96_NAME,
-        count=6,
-    )
-
-    tip_rack_1 = stacker.retrieve()
-    ctx.move_labware(tip_rack_1, tip_adapter, use_gripper=True)
-    tip_racks.append(tip_rack_1)
-    
+    tip_racks = [tip_rack_1, tip_rack_2, tip_rack_3]
 
     ##########################
     ### PIPETTE DEFINITION ###
@@ -307,21 +273,12 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
 
     # manual move
     log_position(ctx, source_reservoir)
-    ctx.move_labware(source_reservoir, stacker, use_gripper=False)
+    ctx.move_labware(source_reservoir, "D4", use_gripper=False)
     log_position(ctx, source_reservoir)
     ctx.move_labware(source_reservoir, RESERVOIR_STARTING_POSITION, use_gripper=True)
     log_position(ctx, source_reservoir)
 
     # Other important manual moves?
-
-    #######################
-    #### STACKER MOVE ####
-    #######################
-
-    tip_rack_2 = stacker.retrieve()
-    ctx.move_labware(tip_rack_2, "C3", use_gripper=True)
-    tip_racks.append(tip_rack_2)
-
 
     # 96 channel column pickup
     pipette_96_channel.configure_nozzle_layout(style=protocol_api.COLUMN, start="A12")
@@ -343,18 +300,9 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
     pipette_96_channel.drop_tip(waste_chute)
     comment_tip_rack_status(ctx, tip_rack_2)
 
-
     # put the tip rack in the trash
     # since it cannot have a row pickup
     ctx.move_labware(tip_rack_2, waste_chute, use_gripper=True)
-
-    #######################
-    #### STACKER MOVE ####
-    #######################
-    tip_rack_3 = stacker.retrieve()
-    ctx.move_labware(tip_rack_3, "C4", use_gripper=True)
-    tip_racks.append(tip_rack_3)
-
     ctx.move_labware(tip_rack_3, "C3", use_gripper=True)
 
     # 96 channel row pickup
@@ -402,8 +350,7 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
     ctx.comment("I think the above should not be empty?")
     # Thermocycler lid moves
     ctx.move_labware(dest_pcr_plate, thermocycler, use_gripper=True)
-    print(lids)
-    ctx.move_lid(source_location=lids, new_location=dest_pcr_plate, use_gripper=True, )
+    ctx.move_lid(source_location=lids, new_location=dest_pcr_plate, use_gripper=True)
     thermocycler.close_lid()
     thermocycler.set_block_temperature(38, hold_time_seconds=5.0)
     thermocycler.set_lid_temperature(38)
@@ -509,18 +456,6 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
 
     assert isinstance(waste_chute.top(), protocol_api.WasteChute)
     assert isinstance(source_reservoir.wells_by_name()["A1"].top(), types.Location)
-
-    tip_rack_6 = ctx.load_labware(TIPRACK_96_NAME, protocol_api.OFF_DECK)
-    tip_rack_7 = ctx.load_labware(TIPRACK_96_NAME, protocol_api.OFF_DECK)
-    print(1)
-    ctx.move_labware(tip_rack_1, waste_chute)
-    print('new')
-    ctx.move_labware(tip_rack_6, tip_adapter)
-    ctx.move_labware(tip_rack_7, 'C3')
-
-    # ctx.move_labware(tip_rack_3, waste_chute)
-    #ctx.move_labware(tip_rack_6, tip_adapter, use_gripper=True)
-
     '''
     We are going to go through each liquid class at 50, 200, and 1000 with the 1000uL tips
     This wil take place on two tip racks. One is the tip rack on the adapter. This will be used with the three main transfers.
@@ -533,13 +468,16 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
     ethanol_80 = ctx.define_liquid_class("ethanol_80")
     classy = [water_class,glycerol_50, ethanol_80 ]
     liquid_classy_iterator = 0  # Initialize outside the loop
-    
+    ctx.move_labware(tip_rack_1, waste_chute, use_gripper = False)
+    print('new')
+    ctx.move_labware(tip_rack_6, tip_rack_adapter, use_gripper = False)
+    ctx.move_labware(tip_rack_5, 'C3', use_gripper = False)
     for LC in classy:
         ctx.comment(str('This is the liquid class: ') + str(LC))
         pipette_96_channel.pick_up_tip(tip_rack_6['A1'])
         pipette_96_channel.transfer_liquid(liquid_class=LC, volume=5, source=source_reservoir["A1"], dest=dest_pcr_plate['A1'], new_tip='never', visit_every_well= True)
-        pipette_96_channel.transfer_liquid(liquid_class=LC, volume=200, source=source_reservoir["A1"], dest=dest_pcr_plate['A1'], new_tip='never', visit_every_well= True)
-        pipette_96_channel.transfer_liquid(liquid_class=LC, volume=1000, source=source_reservoir["A1"], dest=dest_pcr_plate['A1'], new_tip='never', visit_every_well= True)
+        pipette_96_channel.transfer_liquid(liquid_class=LC, volume=195, source=source_reservoir["A1"], dest=dest_pcr_plate['A1'], new_tip='never', visit_every_well= True)
+        pipette_96_channel.transfer_liquid(liquid_class=LC, volume=200, source=dest_pcr_plate['A1'], dest= source_reservoir["A1"] , new_tip='never', visit_every_well= True)
         pipette_96_channel.return_tip()
 
         ctx.comment('This is a configuration')
@@ -548,28 +486,21 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
         destination_wells = [dest_pcr_plate[well] for well in wells]
         if liquid_classy_iterator == 0:
             pipette_96_channel.configure_nozzle_layout(style=protocol_api.COLUMN, start="A12")
-            pipette_96_channel.pick_up_tip(tip_rack_7['A12'])
+            pipette_96_channel.pick_up_tip(tip_rack_5['A12'])
             liquid_classy_iterator = 1
-            pipette_96_channel.transfer_liquid(liquid_class=water_class, volume=1000, source=source_reservoir["A1"], dest=destination_wells, new_tip='never')
+            pipette_96_channel.transfer_liquid(liquid_class=water_class, volume=50, source=source_reservoir["A1"], dest=destination_wells, new_tip='never')
 
         elif liquid_classy_iterator == 1:
             pipette_96_channel.configure_nozzle_layout(style=protocol_api.SINGLE, start="A12")
-            pipette_96_channel.pick_up_tip(tip_rack_7['A11'])
-            pipette_96_channel.transfer_liquid(liquid_class=water_class, volume=1000, source=source_reservoir["A1"], dest=dest_pcr_plate['A1'], new_tip='never')
+            pipette_96_channel.pick_up_tip(tip_rack_5['A11'])
+            pipette_96_channel.transfer_liquid(liquid_class=water_class, volume=50, source=source_reservoir["A1"], dest=dest_pcr_plate['A1'], new_tip='never')
 
             liquid_classy_iterator = 2 #change to 2, so the else statement is not run again.
 
         else:
             pipette_96_channel.configure_nozzle_layout(style=protocol_api.ALL)
             pipette_96_channel.pick_up_tip(tip_rack_6['A12'])
-            pipette_96_channel.transfer_liquid(liquid_class=water_class, volume=1000, source=source_reservoir["A1"], dest=dest_pcr_plate['A1'], new_tip='never', visit_every_well=True)
+            pipette_96_channel.transfer_liquid(liquid_class=water_class, volume=50, source=source_reservoir["A1"], dest=dest_pcr_plate['A1'], new_tip='never', visit_every_well=True)
 
         pipette_96_channel.drop_tip()
         pipette_96_channel.configure_nozzle_layout(style=protocol_api.ALL)
-    
-
-
-
-
-
-
