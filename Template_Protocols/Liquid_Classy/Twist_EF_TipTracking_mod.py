@@ -336,7 +336,8 @@ def run(ctx):
             p50_ferat_props.aspirate.delay.duration = 3
            
             p50.transfer_liquid(liquid_class = FRERAT_lc, volume = 10, source = FRERAT.parent.columns_by_name()['1'], dest = samples[a].parent.columns_by_name()['1'],new_tip ='Never')
-          
+            p50.blow_out(samples[a].top(-10))
+            mix(20,40,samples[a])
 
             ''' 
             p50.aspirate(10,FRERAT.bottom(.4))
@@ -350,6 +351,8 @@ def run(ctx):
             tiptrack(tip50) 
             p50.pick_up_tip()
             p50.transfer_liquid(liquid_class = FRERAT_lc, volume = 10, Source = FRERAT, sdest = samples[a],new_tip ='Never')
+            p50.blow_out(samples[a].top(-10))
+            mix(20,40,samples[a])
         drop_tip(p50)
 
     if on_deck_thermo==True:
@@ -392,8 +395,10 @@ def run(ctx):
             p50.adapter_props.dispense.blowout = True
             p50.adapter_props.dispense.blowout.location = 'destination'
             p50.transfer_liquid(volume = Adap_Vol, source= Adapter.parent.columns()[1], dest = samples[b], new_tip = 'never', liquid_class = adapter_vol_LC)
+            p50.blow_out(samples[b].top(-10))
         else:
             p50.transfer_liquid(volume = Adap_Vol, source= Adapter.parent.columns()[1], dest = samples[b].parent.columns()[0], new_tip = 'never', liquid_class = adapter_vol_LC)
+            p50.blow_out(samples[b].top(-10))
         incrementer = incrementer +1 
         drop_tip(p50)
         ''' 
@@ -410,6 +415,7 @@ def run(ctx):
         tiptrack(tip50)
         p50.pick_up_tip()
         p50.transfer_liquid(volume = 20, liquid_class =LIG_LC, source = LIG.parent.columns_by_name()['2'], dest =samples[c].parent.columns_by_name()[str(c+1)] , new_tip = 'never')
+        mix(15,50,samples[c])
         drop_tip(p50)
         ''' 
 
@@ -468,6 +474,7 @@ def run(ctx):
         tiptrack(tip200)
         p1000.pick_up_tip()
         p1000.transfer_liquid(volume = 60, liquid_class =  Ampure_LC,  source = AMPure.parent.columns_by_name()['1'], dest = AMPure.parent.columns_by_name()['1'] , new_tip = 'never')
+        p1000.mix(15,120,samples[d].bottom(1))
         drop_tip(p1000)
 
         
@@ -550,15 +557,12 @@ def run(ctx):
     RSB_LC_config.dispense.retract.blowout.location = 'destination'
     RSB_LC_config.dispense.retract.blowout.flow_rate = 50
     RSB_LC_config.dispense.retract.blowout.enabled = True
-    ctx.comment(str(RSB_LC_config.aspirate.submerge.offset.z))
 
     ''' 
     repition 
     Liquid class in shared data
     
     '''    
-    RSB_LC_config = RSB_LC.get_for(p50, p50_racks_ondeck[0])
-
     for x in range(Columns):
         tiptrack(tip50)
         p50.pick_up_tip()
@@ -711,6 +715,7 @@ def run(ctx):
         p1000.mix(15,90,samples[d+4])
         p1000.blow_out(samples[d+4].top(-4))
         drop_tip(p1000)
+
   
         ''' 
         p1000.aspirate(50,AMPure.bottom(z=.4))
