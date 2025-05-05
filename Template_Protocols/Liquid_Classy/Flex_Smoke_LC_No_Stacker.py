@@ -227,6 +227,7 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
     # Load these directly with the RTP
     source_reservoir = ctx.load_labware(ctx.params.reservoir_name, RESERVOIR_STARTING_POSITION)
     dest_pcr_plate = ctx.load_labware(ctx.params.well_plate_name, WELL_PLATE_STARTING_POSITION)
+    dest_pcr_plate.load_empty(dest_pcr_plate.wells())
 
     tip_rack_1 = ctx.load_labware(TIPRACK_96_NAME, "A2", adapter=TIPRACK_96_ADAPTER_NAME)
     tip_rack_adapter = tip_rack_1.parent
@@ -242,7 +243,9 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
     ### PIPETTE DEFINITION ###
     ##########################
 
-    pipette_96_channel = ctx.load_instrument(PIPETTE_96_CHANNEL_NAME, mount="left", tip_racks=tip_racks, liquid_presence_detection=True)
+    pipette_96_channel = ctx.load_instrument(PIPETTE_96_CHANNEL_NAME, mount="left", tip_racks=tip_racks, liquid_presence_detection= True)
+    
+    
     pipette_96_channel.trash_container = waste_chute
 
     assert isinstance(pipette_96_channel.trash_container, protocol_api.WasteChute)
@@ -250,10 +253,11 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
     ########################
     ### LOAD SOME LIQUID ###
     ########################
+   
 
     water = ctx.define_liquid(name="water", description="High Quality H₂O", display_color="#42AB2D")
-    source_reservoir.wells_by_name()["A1"].load_liquid(liquid=water, volume=29000)
-
+    source_reservoir.wells_by_name()["A1"].load_liquid(liquid=water, volume=20000)
+    
     ################################
     ### GRIPPER LABWARE MOVEMENT ###
     ################################
@@ -281,16 +285,21 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
     # Other important manual moves?
 
     # 96 channel column pickup
+   
+    
     pipette_96_channel.configure_nozzle_layout(style=protocol_api.COLUMN, start="A12")
+    
+    
     pipette_96_channel.pick_up_tip(tip_rack_2["A1"])
     comment_tip_rack_status(ctx, tip_rack_2)
     pipette_96_channel.aspirate(5, source_reservoir["A1"])
     pipette_96_channel.touch_tip()
     pipette_96_channel.dispense(5, dest_pcr_plate[f"A1"])
     pipette_96_channel.drop_tip(waste_chute)
-
     # 96 channel single pickup
+
     pipette_96_channel.configure_nozzle_layout(style=protocol_api.SINGLE, start="H12")
+
     pipette_96_channel.pick_up_tip(tip_rack_2)
     pipette_96_channel.aspirate(5, source_reservoir["A1"])
     pipette_96_channel.touch_tip()
@@ -299,6 +308,8 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
     pipette_96_channel.dispense(500, source_reservoir["A1"])
     pipette_96_channel.drop_tip(waste_chute)
     comment_tip_rack_status(ctx, tip_rack_2)
+    
+
 
     # put the tip rack in the trash
     # since it cannot have a row pickup
@@ -311,7 +322,7 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
     pipette_96_channel.mix(3, 500, source_reservoir["A1"])
     pipette_96_channel.drop_tip(waste_chute)
     comment_tip_rack_status(ctx, tip_rack_3)
-
+   
     # 96 channel full rack pickup
     pipette_96_channel.configure_nozzle_layout(style=protocol_api.ALL, start="A1")
     pipette_96_channel.pick_up_tip(tip_rack_1["A1"])
@@ -409,7 +420,6 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
     ctx.pause(
         "Is the pipette tip in the middle of the PCR Plate, well A1, in slot C2? It should be 10mm higher than the LPC calibrated height."
     )
-
     ctx.move_labware(labware=dest_pcr_plate, new_location="D2", use_gripper=False)
     pipette_96_channel.move_to(dest_pcr_plate.wells_by_name()["A1"].top())
 
@@ -439,6 +449,7 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
     ctx.pause("Is the pipette tip in the middle of the reservoir , well A1, in slot D2? It should be at the LPC calibrated height.")
 
     pipette_96_channel.return_tip()
+   
     ctx.move_labware(tip_rack_3, waste_chute, use_gripper=True)
 
     ctx.pause("!!!!!!!!!!YOU NEED TO REDO LPC!!!!!!!!!!")
@@ -461,8 +472,7 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
     This wil take place on two tip racks. One is the tip rack on the adapter. This will be used with the three main transfers.
     One will be on the deck used for partial tip pickups. It will go through water with a column pickup and glycerol with a single
     These should have identical steps to their friend above in the last line of the for 'LC in classy' for loop  
-    
-    '''
+
     water_class = ctx.define_liquid_class("water")
     glycerol_50 = ctx.define_liquid_class("glycerol_50")
     ethanol_80 = ctx.define_liquid_class("ethanol_80")
@@ -472,12 +482,14 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
     print('new')
     ctx.move_labware(tip_rack_6, tip_rack_adapter, use_gripper = False)
     ctx.move_labware(tip_rack_5, 'C3', use_gripper = False)
+    
+    
     for LC in classy:
         ctx.comment(str('This is the liquid class: ') + str(LC))
         pipette_96_channel.pick_up_tip(tip_rack_6['A1'])
-        pipette_96_channel.transfer_liquid(liquid_class=LC, volume=5, source=source_reservoir["A1"], dest=dest_pcr_plate['A1'], new_tip='never', visit_every_well= True)
-        pipette_96_channel.transfer_liquid(liquid_class=LC, volume=195, source=source_reservoir["A1"], dest=dest_pcr_plate['A1'], new_tip='never', visit_every_well= True)
-        pipette_96_channel.transfer_liquid(liquid_class=LC, volume=200, source=dest_pcr_plate['A1'], dest= source_reservoir["A1"] , new_tip='never', visit_every_well= True)
+        pipette_96_channel.transfer_with_liquid_class(liquid_class=LC, volume=50, source=source_reservoir["A1"], dest=dest_pcr_plate['A1'], new_tip='never', visit_every_well= True)
+        pipette_96_channel.transfer_with_liquid_class(liquid_class=LC, volume=40, source=dest_pcr_plate["A1"], dest=source_reservoir['A1'], new_tip='never', visit_every_well= True)
+        pipette_96_channel.transfer_with_liquid_class(liquid_class=LC, volume=50, source=source_reservoir['A1'], dest= source_reservoir["A1"] , new_tip='never', visit_every_well= True)
         pipette_96_channel.return_tip()
 
         ctx.comment('This is a configuration')
@@ -488,19 +500,21 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
             pipette_96_channel.configure_nozzle_layout(style=protocol_api.COLUMN, start="A12")
             pipette_96_channel.pick_up_tip(tip_rack_5['A12'])
             liquid_classy_iterator = 1
-            pipette_96_channel.transfer_liquid(liquid_class=water_class, volume=50, source=source_reservoir["A1"], dest=destination_wells, new_tip='never')
+            pipette_96_channel.transfer_with_liquid_class(liquid_class=water_class, volume=50, source=source_reservoir["A1"], dest=dest_pcr_plate.columns_by_name()['2'], new_tip='never')
 
         elif liquid_classy_iterator == 1:
             pipette_96_channel.configure_nozzle_layout(style=protocol_api.SINGLE, start="A12")
             pipette_96_channel.pick_up_tip(tip_rack_5['A11'])
-            pipette_96_channel.transfer_liquid(liquid_class=water_class, volume=50, source=source_reservoir["A1"], dest=dest_pcr_plate['A1'], new_tip='never')
+            pipette_96_channel.transfer_with_liquid_class(liquid_class=water_class, volume=50, source=source_reservoir["A1"], dest=dest_pcr_plate['B1'], new_tip='never')
 
             liquid_classy_iterator = 2 #change to 2, so the else statement is not run again.
 
         else:
             pipette_96_channel.configure_nozzle_layout(style=protocol_api.ALL)
             pipette_96_channel.pick_up_tip(tip_rack_6['A12'])
-            pipette_96_channel.transfer_liquid(liquid_class=water_class, volume=50, source=source_reservoir["A1"], dest=dest_pcr_plate['A1'], new_tip='never', visit_every_well=True)
+            pipette_96_channel.transfer_with_liquid_class(liquid_class=water_class, volume=50, source=source_reservoir["A1"], dest=dest_pcr_plate['A1'], new_tip='never', visit_every_well=True)
 
         pipette_96_channel.drop_tip()
         pipette_96_channel.configure_nozzle_layout(style=protocol_api.ALL)
+            
+    '''  

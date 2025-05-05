@@ -18,19 +18,6 @@ def add_parameters(parameters):
         ],
         default="once",
     )
-
-    parameters.add_str(
-        variable_name="liquid_strat",
-        display_name="select liquid",
-        choices=[
-            {"display_name": "all", "value": "all"},
-            {"display_name": "glycerol", "value": "glycerol_50"},
-            {"display_name": "water", "value": "water"},
-            {"display_name": "ethanol", "value": "ethanol_80"},
-        ],
-        default="all",
-    )
-
 def run(protocol_context):
     
     # Define labware, trash and pipette
@@ -42,9 +29,6 @@ def run(protocol_context):
     nest_plate_source_2 = protocol_context.load_labware("nest_96_wellplate_2ml_deep", "D2")
     nest_plate_dest_1 = protocol_context.load_labware("nest_96_wellplate_2ml_deep", "A2")
     nest_plate_dest_2 = protocol_context.load_labware("nest_96_wellplate_2ml_deep", "B3")
-    nest_plate_dest_1.load_empty(nest_plate_dest_1.wells())
-    nest_plate_dest_2.load_empty(nest_plate_dest_2.wells())
-
     Liquid_1 = protocol_context.define_liquid(
     name="Liquid 1",
     description="Green colored water for demo",
@@ -78,36 +62,14 @@ def run(protocol_context):
     water_liquid_class = protocol_context.define_liquid_class("water")
     glycerin_50_liquid_class = protocol_context.define_liquid_class("glycerol_50")
     ethanol_80_liquid_class = protocol_context.define_liquid_class("ethanol_80")
-    
     liquid_classes = [water_liquid_class, glycerin_50_liquid_class, ethanol_80_liquid_class]
 
     # Transfer 100ul of water from two wells of source to two wells of destination
     # Use one tip and use the trash as the trash location
     volumes = [5, 200, 1000]
     tip_strategy = protocol_context.params.tip_strat
-    liquid_strat = protocol_context.params.liquid_strat
-
-    liquid_classy_options = {
-        'all': ['Water', 'glycerin_50', 'ethanol_80'],
-        'Water': ['water'],
-        'glycerin_50': ['glycerin_50'],
-        'ethanol_80':['ethanol_80']
-    }
-
-    actual_class_names = liquid_classy_options[liquid_strat]
-    if len(actual_class_names)>1:
-        pass
-    elif actual_class_names == 'water':
-        liquid_classes[0]
-    elif actual_class_names == 'glycerin_50':
-        liquid_classes[1]
-    elif actual_class_names == 'ethanol_80':
-        liquid_classes[2]
-    
-    
-    
-
-    counter = 0
+    actual_class_names = ['ethanol_80']
+    counter = -1
     i = -1
     i_always = -1
     i_never = -1
@@ -117,10 +79,7 @@ def run(protocol_context):
         message = f'This is the tip strategy we will use: {tip_strategy} and the volume {volume}'
         protocol_context.pause(message)
         for liquid_class in liquid_classes:
-            if len(actual_class_names)>1:
-                counter =+ 1
-            else:
-                counter = 0
+            counter =+ 1
             message = f'This is the tip strategy we will use: {tip_strategy} and the liquid class: {actual_class_names[counter]} and the volume {volume}'
             protocol_context.pause(message)
             # Single-Transfer using P1000 pipette
@@ -150,6 +109,7 @@ def run(protocol_context):
                 dest_wells_1 = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B9']
                 dest_wells_2 = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B9']
                 i_always +=1
+                print(i_always)
                 transfer_set(protocol_context, trash, pipette_1k, volume, 'always', liquid_class, nest_plate_source_1, nest_plate_source_2,nest_plate_dest_1,nest_plate_dest_2, source_wells_1[i_always], source_wells_2[i_always], dest_wells_1[i_always], dest_wells_2[i_always])
 
                 
