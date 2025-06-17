@@ -1,6 +1,6 @@
 requirements = {
     "robotType": "Flex",
-    "apiLevel": "2.23"
+    "apiLevel": "2.24"
 }
 
 metadata = {
@@ -75,11 +75,11 @@ def run(protocol_context):
 
 
     # Define water liquid class
-    water_liquid_class = protocol_context.define_liquid_class("water")
-    glycerin_50_liquid_class = protocol_context.define_liquid_class("glycerol_50")
-    ethanol_80_liquid_class = protocol_context.define_liquid_class("ethanol_80")
+    water_liquid_class = protocol_context.get_liquid_class("water")
+    glycerol_50_liquid_class = protocol_context.get_liquid_class("glycerol_50")
+    ethanol_80_liquid_class = protocol_context.get_liquid_class("ethanol_80")
     
-    liquid_classes = [water_liquid_class, glycerin_50_liquid_class, ethanol_80_liquid_class]
+    liquid_classes = [water_liquid_class, glycerol_50_liquid_class, ethanol_80_liquid_class]
 
     # Transfer 100ul of water from two wells of source to two wells of destination
     # Use one tip and use the trash as the trash location
@@ -88,9 +88,9 @@ def run(protocol_context):
     liquid_strat = protocol_context.params.liquid_strat
 
     liquid_classy_options = {
-        'all': ['Water', 'glycerin_50', 'ethanol_80'],
+        'all': ['Water', 'glycerol_50', 'ethanol_80'],
         'Water': ['water'],
-        'glycerin_50': ['glycerin_50'],
+        'glycerol_50': ['glycerol_50'],
         'ethanol_80':['ethanol_80']
     }
 
@@ -99,7 +99,7 @@ def run(protocol_context):
         pass
     elif actual_class_names == 'water':
         liquid_classes[0]
-    elif actual_class_names == 'glycerin_50':
+    elif actual_class_names == 'glycerol_50':
         liquid_classes[1]
     elif actual_class_names == 'ethanol_80':
         liquid_classes[2]

@@ -79,7 +79,7 @@ from opentrons.protocol_api.module_contexts import (
 
 
 metadata = {
-    "protocolName": "STACKER Flex Smoke Test - v2.23",
+    "protocolName": "STACKER && LC Flex Smoke Test - v2.23",
     "author": "QA team",
 }
 
@@ -139,7 +139,7 @@ def comment_tip_rack_status(ctx, tip_rack):
     range_A_to_H = [chr(i) for i in range(ord("A"), ord("H") + 1)]
     range_1_to_12 = range(1, 13)
 
-    ctx.comment(f"Tip rack in {tip_rack.parent}") 
+    ctx.comment(f"Tip rack in {tip_rack.parent}")
 
     for row in range_A_to_H:
         status_line = f"{row}: "
@@ -237,7 +237,10 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
     absorbance_module.initialize("single", [600], 450)
     absorbance_module.open_lid()
 
-  
+    stacker: FlexStackerContext = ctx.load_module(
+        FLEX_STACKER, "D4"
+    ) 
+
     #######################
     ### MODULE ADAPTERS ###
     #######################
@@ -402,8 +405,7 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
     ctx.comment("I think the above should not be empty?")
     # Thermocycler lid moves
     ctx.move_labware(dest_pcr_plate, thermocycler, use_gripper=True)
-    print(lids)
-    ctx.move_lid(source_location=lids, new_location=dest_pcr_plate, use_gripper=True, )
+    ctx.move_lid(source_location=lids, new_location=dest_pcr_plate, use_gripper=True)
     thermocycler.close_lid()
     thermocycler.set_block_temperature(38, hold_time_seconds=5.0)
     thermocycler.set_lid_temperature(38)
@@ -521,52 +523,72 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
     # ctx.move_labware(tip_rack_3, waste_chute)
     #ctx.move_labware(tip_rack_6, tip_adapter, use_gripper=True)
 
- 
     '''
     We are going to go through each liquid class at 50, 200, and 1000 with the 1000uL tips
     This wil take place on two tip racks. One is the tip rack on the adapter. This will be used with the three main transfers.
     One will be on the deck used for partial tip pickups. It will go through water with a column pickup and glycerol with a single
     These should have identical steps to their friend above in the last line of the for 'LC in classy' for loop  
-    '''
-
-    water_class = ctx.define_liquid_class("water")
-    ethanol_class = ctx.define_liquid_class("ethanol_80")
-    glycerol_class = ctx.define_liquid_class("glycerol_50")
-    classy = [water_class,glycerol_class, ethanol_class ]
-    liquid_classy_iterator = 0  # Initialize outside the loop
     
+    '''
+    water_class = ctx.get_liquid_class(base_liquid_class ="water")
+    glycerol_50 = ctx.define_liquid_class("glycerol_50")
+    ethanol_80 = ctx.define_liquid_class("ethanol_80")
+    classy = [water_class,glycerol_50, ethanol_80 ]
+    liquid_classy_iterator = 0  # Initialize outside the loop
+
     for LC in classy:
         ctx.comment(str('This is the liquid class: ') + str(LC))
         pipette_96_channel.pick_up_tip(tip_rack_6['A1'])
-        pipette_96_channel.transfer_liquid(liquid_class=LC, volume=5, source=source_reservoir["A1"], dest=dest_pcr_plate['A1'], new_tip='never', visit_every_well= True)
-        pipette_96_channel.transfer_liquid(liquid_class=LC, volume=200, source=source_reservoir["A1"], dest=dest_pcr_plate['A1'], new_tip='never', visit_every_well= True)
-        pipette_96_channel.transfer_liquid(liquid_class=LC, volume=1000, source=source_reservoir["A1"], dest=dest_pcr_plate['A1'], new_tip='never', visit_every_well= True)
+        pipette_96_channel.transfer_with_liquid_class(liquid_class=LC, volume=5, source=source_reservoir["A1"], dest=dest_pcr_plate['A1'], new_tip='never')
+        pipette_96_channel.transfer_with_liquid_class(liquid_class=LC, volume=200, source=source_reservoir["A1"], dest=dest_pcr_plate['A1'], new_tip='never')
+        pipette_96_channel.transfer_with_liquid_class(liquid_class=LC, volume=1000, source=source_reservoir["A1"], dest=dest_pcr_plate['A1'], new_tip='never')
         pipette_96_channel.return_tip()
-
         ctx.comment('This is a configuration')
         ctx.pause(msg='When you do single vs. column tip pickup, they should be using the same liquid handling steps')
-        wells = ['A1', 'B1', 'C1', 'D1', 'E1', 'F1', 'G1', 'H1']
-        destination_wells = [dest_pcr_plate[well] for well in wells]
+
         if liquid_classy_iterator == 0:
             pipette_96_channel.configure_nozzle_layout(style=protocol_api.COLUMN, start="A12")
             pipette_96_channel.pick_up_tip(tip_rack_7['A12'])
             liquid_classy_iterator = 1
-            pipette_96_channel.transfer_liquid(liquid_class=water_class, volume=1000, source=source_reservoir["A1"], dest=destination_wells, new_tip='never')
-
         elif liquid_classy_iterator == 1:
             pipette_96_channel.configure_nozzle_layout(style=protocol_api.SINGLE, start="A12")
             pipette_96_channel.pick_up_tip(tip_rack_7['A11'])
-            pipette_96_channel.transfer_liquid(liquid_class=water_class, volume=1000, source=source_reservoir["A1"], dest=dest_pcr_plate['A1'], new_tip='never')
-
             liquid_classy_iterator = 2 #change to 2, so the else statement is not run again.
-
         else:
             pipette_96_channel.configure_nozzle_layout(style=protocol_api.ALL)
             pipette_96_channel.pick_up_tip(tip_rack_6['A12'])
-            pipette_96_channel.transfer_liquid(liquid_class=water_class, volume=1000, source=source_reservoir["A1"], dest=dest_pcr_plate['A1'], new_tip='never', visit_every_well=True)
 
+        pipette_96_channel.transfer_with_liquid_class(liquid_class=water_class, volume=1000, source=source_reservoir["A1"], dest=dest_pcr_plate['A1'], new_tip='never', properties= '')
         pipette_96_channel.drop_tip()
         pipette_96_channel.configure_nozzle_layout(style=protocol_api.ALL)
+    
+
+
+
+    ''' 
+
+    ctx.comment('Water')
+    pipette_96_channel.pick_up_tip(tip_rack_6['A1'])
+    pipette_96_channel.transfer_with_liquid_class(liquid_class = water_class, volume =5, source =source_reservoir["A1"], dest= dest_pcr_plate['A1'], new_tip = 'never' )
+    pipette_96_channel.transfer_with_liquid_class(liquid_class = water_class, volume =200, source =source_reservoir["A1"], dest= dest_pcr_plate['A1'], new_tip = 'never' )
+    pipette_96_channel.transfer_with_liquid_class(liquid_class = water_class, volume =1000, source =source_reservoir["A1"], dest= dest_pcr_plate['A1'], new_tip = 'never' )
+    pipette_96_channel.return_tip()
+    ctx.pause(msg ='When you do single vs. column tip pickup, they should be using the same liquid handling steps')
+    pipette_96_channel.configure_nozzle_layout(style=protocol_api.COLUMN, start="A12")
+    pipette_96_channel.pick_up_tip(tip_rack_7['A12'])
+    # pipette_96_channel.configure_nozzle_layout(style=protocol_api.SINGLE, start="H12")
+    pipette_96_channel.transfer_with_liquid_class(liquid_class = water_class, volume =1000, source =source_reservoir["A1"], dest= dest_pcr_plate['A1'], new_tip = 'never' )
+    
+    ctx.comment('Ethanol')
+    pipette_96_channel.pick_up_tip(tip_rack_6['A1'])
+    pipette_96_channel.transfer_with_liquid_class(liquid_class = ethanol_80, volume =5, source =source_reservoir["A1"], dest= dest_pcr_plate['A1'], new_tip = 'never' )
+    ctx.comment('check if this is the same as the text below it')
+    pipette_96_channel.transfer_with_liquid_class(liquid_class = ethanol_80, volume =200, source =source_reservoir["A1"], dest= dest_pcr_plate['A1'], new_tip = 'never' )
+    pipette_96_channel.transfer_with_liquid_class(liquid_class = ethanol_80, volume =1000, source =source_reservoir["A1"], dest= dest_pcr_plate['A1'], new_tip = 'never' )
+    pipette_96_channel.return_tip()'
+    '''
+
+
 
     
 

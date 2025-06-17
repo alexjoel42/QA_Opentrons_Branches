@@ -548,21 +548,14 @@ def run(ctx):
     ## Setting RSB liquid class settings for RSB
     RSB_LC = ctx.define_liquid_class("glycerol_50")
     RSB_LC_config = RSB_LC.get_for(p50, p50_racks_ondeck[0])
-    #RSB_LC_config.aspirate.submerge.offset =(0,0,0.5)
-    # RSB_LC_config.dispense.submerge.offset =(0,0,0.5)
- 
+    RSB_LC_config.aspirate.submerge.offset =(0,0,0.5)
+    RSB_LC_config.dispense.submerge.offset =(0,0,0.5)
     RSB_LC_config.dispense.mix.enabled = True 
     RSB_LC_config.dispense.mix.repetitions = 20
     RSB_LC_config.dispense.mix.volume = 15
     RSB_LC_config.dispense.retract.blowout.location = 'destination'
     RSB_LC_config.dispense.retract.blowout.flow_rate = 50
     RSB_LC_config.dispense.retract.blowout.enabled = True
-
-    ''' 
-    repition 
-    Liquid class in shared data
-    
-    '''    
     for x in range(Columns):
         tiptrack(tip50)
         p50.pick_up_tip()
