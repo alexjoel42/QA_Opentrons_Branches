@@ -239,15 +239,6 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
 
     tip_racks = [tip_rack_1, tip_rack_2, tip_rack_3]
 
-    ########################
-    ### LOAD SOME LIQUID ###
-    ########################
-   
-
-
-    water = ctx.define_liquid(name="water", description="High Quality H₂O", display_color="#42AB2D")
-    source_reservoir.wells_by_name()["A1"].load_liquid(liquid=water, volume=20000)
-
     ##########################
     ### PIPETTE DEFINITION ###
     ##########################
@@ -259,7 +250,13 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
 
     assert isinstance(pipette_96_channel.trash_container, protocol_api.WasteChute)
 
-  
+    ########################
+    ### LOAD SOME LIQUID ###
+    ########################
+   
+
+    water = ctx.define_liquid(name="water", description="High Quality H₂O", display_color="#42AB2D")
+    source_reservoir.wells_by_name()["A1"].load_liquid(liquid=water, volume=20000)
     
     ################################
     ### GRIPPER LABWARE MOVEMENT ###
@@ -512,12 +509,10 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
     print('new')
     ctx.move_labware(tip_rack_6, tip_rack_adapter, use_gripper = False)
     ctx.move_labware(tip_rack_5, 'C3', use_gripper = False)
-    pipette_96_channel.liquid_presence_detection = False
     
-    class_names = ['water', 'glycerol_50', 'ethanol_80']
     
+    # Replace the problematic section with this corrected version
     for i, LC in enumerate(classy):
-        ctx.comment(f"This is the liquid class: {class_names[i]}")
         
         # First part - use tip_rack_6 for all liquid classes
         pipette_96_channel.configure_nozzle_layout(style=protocol_api.ALL, start="A1")
@@ -577,10 +572,21 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
             )
             pipette_96_channel.drop_tip()
         else:  # Third liquid class (ethanol_80)
-            pass 
+            ''' 
+            pipette_96_channel.configure_nozzle_layout(style=protocol_api.ALL, start="A12")
+            pipette_96_channel.pick_up_tip(tip_rack_6)
+            pipette_96_channel.transfer_with_liquid_class(
+                liquid_class=LC,  # Use LC instead of water_class
+                volume=50, 
+                source=source_reservoir["A1"], 
+                dest=dest_pcr_plate['A1'], 
+                new_tip='never',
+            )
+            pipette_96_channel.return_tip()
+            ''' 
+
         
         # Reset to default configuration after each iteration
         pipette_96_channel.configure_nozzle_layout(style=protocol_api.ALL)
-       
                 
 

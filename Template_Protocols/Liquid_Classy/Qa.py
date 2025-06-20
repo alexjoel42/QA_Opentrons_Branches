@@ -34,12 +34,3 @@ def run(protocol_context):
         trash_location=trash,
         # extra="extra" # TypeError [line 17]: InstrumentContext.transfer_liquid() got an unexpected keyword argument 'extra'
     )
-
-    pipette_50.transfer(
-        volume=26.57,
-        # volume=60,
-        source=nest_plate.rows()[0][0],
-        dest=arma_plate.rows()[0][0],
-        new_tip="always",
-        trash_location=trash,
-    )
