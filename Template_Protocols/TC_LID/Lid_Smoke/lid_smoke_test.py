@@ -59,7 +59,7 @@ def run(protocol: ProtocolContext):
     deck_riser_adapter = protocol.load_adapter("opentrons_flex_deck_riser", 'B2')
 
     lids = [deck_riser_adapter.load_labware(LID_BOTTOM_DEFINITION)]
-    ''' 
+
     for i in range(LID_COUNT - 1):
         lids.append(lids[-1].load_labware(LID_DEFINITION))
     lids.reverse()  # NOTE: reversing to more easily loop through lids from top-to-bottom
@@ -108,4 +108,4 @@ def run(protocol: ProtocolContext):
                 drop_offset=OFFSET_DECK["drop"],
             )
         prev_moved_lid = lid
-        '''
+  

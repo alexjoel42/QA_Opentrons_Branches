@@ -1,6 +1,11 @@
 # API level must be 2.23
 requirements = {"robotType": "Flex", "apiLevel": "2.23"}
-
+'''
+This test will have the stacker load tip racks and plates, move them around, 
+and store them back in the stacker.
+ It will also demonstrate using the stacker as a staging 
+ area for moving labware around the deck.
+'''
 
 def run(protocol):
     """Load Flex Stacker."""

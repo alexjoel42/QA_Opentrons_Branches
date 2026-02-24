@@ -11,6 +11,11 @@ metadata = {
 }
 
 def add_parameters(parameters):
+    """Defines the runtime parameters for the protocol.
+    
+    Args:
+        parameters: The parameters object provided by the Opentrons app.
+    """
     parameters.add_str(
         variable_name="tip_strat",
         display_name="Select tip strategy",
@@ -37,12 +42,10 @@ def add_parameters(parameters):
 def run(protocol_context):
 
     # Define labware, trash and pipette
-    # Changed to 50ul tip racks for P50 pipette
     tiprack_1 = protocol_context.load_labware("opentrons_flex_96_tiprack_50ul", "C2")
     tiprack_2 = protocol_context.load_labware("opentrons_flex_96_tiprack_50ul", "C3")
     trash = protocol_context.load_waste_chute()
 
-    # Changed to 8-channel P50 pipette
     pipette_50 = protocol_context.load_instrument("flex_8channel_50", "left", tip_racks=[tiprack_1, tiprack_2])
 
     nest_plate_source_1 = protocol_context.load_labware("nest_96_wellplate_2ml_deep", "B2")
@@ -65,10 +68,8 @@ def run(protocol_context):
     for row in ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']:
         for col in range(1, 13):
             well = f"{row}{col}"
-            # Adjusted liquid loading volume to be within P50 range
             nest_plate_source_1[well].load_liquid(Liquid_1, volume=50)
             nest_plate_source_2[well].load_liquid(Liquid_2, volume=50)
-
 
     # Define liquid classes
     water_liquid_class = protocol_context.get_liquid_class("water")
@@ -77,7 +78,7 @@ def run(protocol_context):
 
     liquid_classes_all = [water_liquid_class, glycerol_50_liquid_class, ethanol_80_liquid_class]
 
-    # Transfer volumes - adjusted for P50 pipette (max 50µL)
+    # Transfer volumes
     volumes = [5, 20, 50]
     tip_strategy = protocol_context.params.tip_strat
     liquid_strat = protocol_context.params.liquid_strat
@@ -98,27 +99,27 @@ def run(protocol_context):
     protocol_context.pause(f'This is the tip strategy we will use: {tip_strategy}')
 
     for volume in volumes:
+        # Toggle returning tips based on volume to demonstrate the "sometimes" behavior
+        return_it = (volume == 20)
+
         for liquid_class in selected_liquid_classes:
             liquid_class_name = liquid_class.display_name if hasattr(liquid_class, 'display_name') else liquid_class.name
             protocol_context.pause(f'Tip strategy: {tip_strategy}, Liquid class: {liquid_class_name}, Volume: {volume}µL')
 
-            # Modified to use columns instead of individual wells for 8-channel pipette
-            # Columns are typically referred to by their number (1-12) or letter (A-H) for rows
-            # Here we are using string representations of column numbers for clarity
             if tip_strategy == 'never':
-                source_cols_1 = ['1', '2', '3'] # Reduced number of columns to demonstrate
+                source_cols_1 = ['1', '2', '3']
                 source_cols_2 = ['1', '2', '3']
                 dest_cols_1 = ['1', '2', '3']
                 dest_cols_2 = ['1', '2', '3']
-                i_never = (i_never + 1) % len(source_cols_1) # Cycle through available columns
+                i_never = (i_never + 1) % len(source_cols_1)
 
                 transfer_set_multichannel(protocol_context, trash, pipette_50, volume, 'never', liquid_class,
                                          nest_plate_source_1, nest_plate_source_2, nest_plate_dest_1,
                                          nest_plate_dest_2, source_cols_1[i_never], source_cols_2[i_never],
-                                         dest_cols_1[i_never], dest_cols_2[i_never])
+                                         dest_cols_1[i_never], dest_cols_2[i_never], return_it)
 
             elif tip_strategy == 'once':
-                source_cols_1 = ['4', '5', '6'] # Different set of columns
+                source_cols_1 = ['4', '5', '6']
                 source_cols_2 = ['4', '5', '6']
                 dest_cols_1 = ['4', '5', '6']
                 dest_cols_2 = ['4', '5', '6']
@@ -127,9 +128,9 @@ def run(protocol_context):
                 transfer_set_multichannel(protocol_context, trash, pipette_50, volume, 'once', liquid_class,
                                          nest_plate_source_1, nest_plate_source_2, nest_plate_dest_1,
                                          nest_plate_dest_2, source_cols_1[i_once], source_cols_2[i_once],
-                                         dest_cols_1[i_once], dest_cols_2[i_once])
+                                         dest_cols_1[i_once], dest_cols_2[i_once], return_it)
             else: # tip_strategy == 'always'
-                source_cols_1 = ['7', '8', '9'] # Another set of columns
+                source_cols_1 = ['7', '8', '9']
                 source_cols_2 = ['7', '8', '9']
                 dest_cols_1 = ['7', '8', '9']
                 dest_cols_2 = ['7', '8', '9']
@@ -138,13 +139,13 @@ def run(protocol_context):
                 transfer_set_multichannel(protocol_context, trash, pipette_50, volume, 'always', liquid_class,
                                          nest_plate_source_1, nest_plate_source_2, nest_plate_dest_1,
                                          nest_plate_dest_2, source_cols_1[i_always], source_cols_2[i_always],
-                                         dest_cols_1[i_always], dest_cols_2[i_always])
+                                         dest_cols_1[i_always], dest_cols_2[i_always], return_it)
 
 
 def transfer_set_multichannel(
     protocol_context: protocol_api.ProtocolContext,
     trash: protocol_api.WasteChute,
-    pipette_50: protocol_api.InstrumentContext, # Changed pipette to 50µL
+    pipette_50: protocol_api.InstrumentContext,
     volume: float,
     tip_strategy: str,
     liquid_class: protocol_api.LiquidClass,
@@ -156,6 +157,7 @@ def transfer_set_multichannel(
     source_col_2: str,
     dest_col_1: str,
     dest_col_2: str,
+    should_return_tip: bool = False,
 ):
     """Performs a transfer, distribute, and consolidate liquid handling set with 8-channel P50 pipette.
 
@@ -174,6 +176,7 @@ def transfer_set_multichannel(
         source_col_2: The column number in nest_plate_source_2 for transfer, distribute, and consolidate source.
         dest_col_1: The column number in nest_plate_dest_1 for distribute and consolidate destination.
         dest_col_2: The column number in nest_plate_dest_2 for transfer and distribute destination.
+        should_return_tip: Boolean to toggle whether the tip is returned to the rack or dropped in the trash.
     """
 
     if tip_strategy != 'never':
@@ -185,6 +188,7 @@ def transfer_set_multichannel(
             dest=nest_plate_dest_2.columns_by_name()[dest_col_2],
             new_tip=tip_strategy,
             trash_location=trash,
+            return_tip=should_return_tip # Passes the condition through
         )
 
         protocol_context.comment(f'Distribute Liquid: {volume}µL')
@@ -201,6 +205,7 @@ def transfer_set_multichannel(
                 ],
                 new_tip=tip_strategy,
                 trash_location=trash,
+                return_tip=should_return_tip
             )
 
         if tip_strategy == 'always':
@@ -217,6 +222,7 @@ def transfer_set_multichannel(
                 dest=nest_plate_dest_1.columns_by_name()[dest_col_1],
                 new_tip=tip_strategy,
                 trash_location=trash,
+                return_tip=should_return_tip
             )
     else: # tip_strategy == 'never'
         pipette_50.pick_up_tip()
@@ -226,7 +232,7 @@ def transfer_set_multichannel(
             volume=volume,
             source=nest_plate_source_2.columns_by_name()[source_col_2],
             dest=nest_plate_dest_2.columns_by_name()[dest_col_2],
-            new_tip='never', # 'never' means it won't pick up a new tip for this specific transfer action
+            new_tip='never',
             trash_location=trash,
         )
 
@@ -255,4 +261,9 @@ def transfer_set_multichannel(
             new_tip='never',
             trash_location=trash,
         )
-        pipette_50.drop_tip()
+        
+        # Explicit conditional block for the "never" setup
+        if should_return_tip:
+            pipette_50.return_tip()
+        else:
+            pipette_50.drop_tip()
