@@ -12,4 +12,12 @@ requirements = {
 def run(protocol: ProtocolContext) -> None:
     """Protocol."""
     #CONTRAST PICS
-    protocol.capture_image(home_before=True, filename="This is the longest Filename Ever and it will cause suffering")
+    protocol.capture_image(home_before=True, filename="Example_photo_1")
+    protocol.delay(seconds=1)
+    protocol.capture_image(home_before=True, filename="Example_photo_2")
+    protocol.home()
+    protocol.capture_image(home_before=True, filename="Example_photo_3")
+    protocol.delay(seconds=1)
+    protocol.capture_image(home_before=False, filename="Example_photo_4")
+    protocol.delay(seconds=1)
+    protocol.capture_image(home_before=True, filename="Example_photo_5")
