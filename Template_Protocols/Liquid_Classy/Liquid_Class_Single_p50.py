@@ -1,6 +1,6 @@
 requirements = {
     "robotType": "Flex",
-    "apiLevel": "2.24"
+    "apiLevel": "2.27"
 }
 
 metadata = {
@@ -35,8 +35,8 @@ def add_parameters(parameters):
 def run(protocol_context):
 
     # Define labware, trash and pipette
-    tiprack_1 = protocol_context.load_labware("opentrons_flex_96_tiprack_50ul", "C2")
-    tiprack_2 = protocol_context.load_labware("opentrons_flex_96_tiprack_50ul", "C3")
+    tiprack_1 = protocol_context.load_labware("opentrons_flex_96_tiprack_20ul", "C2")
+    tiprack_2 = protocol_context.load_labware("opentrons_flex_96_tiprack_20ul", "C3")
     trash = protocol_context.load_waste_chute()
     pipette_50 = protocol_context.load_instrument("flex_1channel_50", "right", tip_racks=[tiprack_1, tiprack_2])
     nest_plate_source_1 = protocol_context.load_labware("nest_96_wellplate_2ml_deep", "B2")
@@ -79,7 +79,7 @@ def run(protocol_context):
     liquid_classes_all = [water_liquid_class, glycerol_50_liquid_class, ethanol_80_liquid_class]
 
     # Transfer volumes
-    volumes = [3, 19, 49] # Adjusted volumes for P50
+    volumes = [3, 12, 20] # Adjusted volumes for P50
     tip_strategy = protocol_context.params.tip_strat
     liquid_strat = protocol_context.params.liquid_strat
 

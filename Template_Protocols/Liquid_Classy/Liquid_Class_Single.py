@@ -83,7 +83,7 @@ def run(protocol_context):
 
     # Transfer 100ul of water from two wells of source to two wells of destination
     # Use one tip and use the trash as the trash location
-    volumes = [5, 200, 1000]
+    volumes = [5, 12, 20]
     tip_strategy = protocol_context.params.tip_strat
     liquid_strat = protocol_context.params.liquid_strat
 
