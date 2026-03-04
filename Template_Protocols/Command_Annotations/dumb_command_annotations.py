@@ -25,16 +25,16 @@ def run(protocol_context:protocol_api.ProtocolContext):
 			pipette_1k.return_tip()
 	''' 
 
+	for i in range(3):
+		step_group = protocol_context.create_and_start_step_group(f"Incremental step grouping {i+1}")
 
-	step_group = protocol_context.create_and_start_step_group("Incremental step grouping")
+		pipette_1k.pick_up_tip()
+		pipette_1k.aspirate(50, nest_plate['C1'].bottom(z=1))
+		pipette_1k.dispense(50, arma_plate['C1'].bottom(z=1))
+		pipette_1k.touch_tip()
+		pipette_1k.return_tip()
+		# Doesn't work yet because we need to wire up
+		step_group.end_group()
 
-	pipette_1k.pick_up_tip()
-	pipette_1k.aspirate(50, nest_plate['C1'].bottom(z=1))
-	pipette_1k.dispense(50, arma_plate['C1'].bottom(z=1))
-	pipette_1k.touch_tip()
-	pipette_1k.drop_tip()
-	# Doesn't work yet because we need to wire up
-	step_group.close_group()
-
-	pipette_1k.pick_up_tip()
-	pipette_1k.return_tip()
+		pipette_1k.pick_up_tip()
+		pipette_1k.return_tip()
