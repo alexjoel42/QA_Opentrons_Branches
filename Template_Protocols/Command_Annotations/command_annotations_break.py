@@ -54,9 +54,8 @@ def run(protocol: protocol_api.ProtocolContext) -> None:
     pipette.drop_tip(location=trash)
     step_group.end_group()
     # --- 6. Alternating group_steps and create_and_start_step_group ---
-    for i in range(1000):
-        with protocol.group_steps("Context group A", description="First"):
-            protocol.comment("In context group A.")
+    with protocol.group_steps("Context group A", description="First"):
+        protocol.comment("In context group A.")
     sg = protocol.create_and_start_step_group("Manual group B", description="Second")
     protocol.comment("In manual group B.")
     sg.end_group()

@@ -3,6 +3,15 @@ from typing import Any, Dict, Optional
 
 class OpentronsAuthClient:
     """
+    Please reference the OpenAPI spec for the Opentrons Auth Server API to understand the available endpoints and their expected request/response formats.
+    See the following URLs for more details:
+    http://robot_ip:31950/openapi.json 
+
+    http://robot_ip:31950/auth/openapi.json
+
+    http://robot_ip:31950/system/openapi.json
+
+    http://robot_ip:31950/update_server/openapi.json
     Synchronous client for the Opentrons Auth Server API.
     Handles OAuth2 authentication, user management, and system settings.
     """
