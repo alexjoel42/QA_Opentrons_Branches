@@ -14,12 +14,14 @@ def run(protocol_context):
 	pipette_1k = protocol_context.load_instrument("flex_1channel_1000", "right", tip_racks=[tiprack])
 	nest_plate = protocol_context.load_labware("nest_96_wellplate_2ml_deep", "D1")
 	arma_plate = protocol_context.load_labware("armadillo_96_wellplate_200ul_pcr_full_skirt", "D3")
-
-	with protocol_context.group_steps("Aspirate and Dispense 1"):
-		pipette_1k.pick_up_tip()
-		pipette_1k.aspirate(50, nest_plate['A1'].bottom(z=1))
-		pipette_1k.dispense(50, arma_plate['A1'].bottom(z=1))
-		pipette_1k.drop_tip()
+	for i in range(3):
+		with protocol_context.group_steps(f"Aspirate and Dispense {i + 1}"):
+			pipette_1k.pick_up_tip()
+			pipette_1k.aspirate(50, nest_plate[f'A{i + 1}'].bottom(z=1))
+			pipette_1k.dispense(50, arma_plate[f'A{i + 1}'].bottom(z=1))
+			with protocol_context.group_steps("drop tip"):
+				pipette_1k.drop_tip()
+	
 
 	pipette_1k.pick_up_tip()
 	pipette_1k.aspirate(50, nest_plate['B1'].bottom(z=1))

@@ -1,6 +1,6 @@
 from opentrons import protocol_api
 
-requirements = {"robotType": "Flex", "apiLevel": "2.28"}
+requirements = {"robotType": "Flex", "apiLevel": "2.29"}
 
 
 def run(protocol: protocol_api.ProtocolContext):
