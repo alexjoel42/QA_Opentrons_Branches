@@ -24,7 +24,7 @@ def main():
     
     try:
         # 1. Check current settings (Does not require auth)
-        print("--- Fetching Current Settings ---")
+        print("--- Fetching Current Settings ---")[-]
         current_settings = client.get_settings()
         print(f"Initial State: {current_settings['data']}")
     except httpx.HTTPStatusError as e:
