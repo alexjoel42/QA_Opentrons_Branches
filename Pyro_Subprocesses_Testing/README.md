@@ -12,7 +12,10 @@ This folder tracks **manual and protocol-driven validation** for the Opentrons F
 | **Run lifecycle** | Subprocess path must create, run, stop, and clean up runs reliably | Cancel ends run cleanly; new run can start; no stuck “running” in App | Zombie runs, server wedged, or run queue confusion after cancel / fault |
 | **Throughput & scheduling** | Subprocess startup and real hardware contention differ from CI | **Same protocol** with flag OFF vs ON: acceptable time-to-start and wall time; stable over **N repeats** | Only happy-path tested once; surprises under load (e.g. eager subprocess cost vs production scheduling) |
 | **Peripherals & large payloads** | Camera, plate reader, stackers, TC lids stress **bigger RPC payloads and timing** than pipette-only smokes | Devices complete; CSV/exports legible; no chronic timeouts vs baseline | Mock/sim-only validation; bandwidth or firmware timing bugs on real hardware |
-| **Resilience** | Field robots see faults | After **E-stop**, **kill -9** on protocol child, or **mid-run cancel**, robot-server **stays up** and `/health` stays healthy; logs explain failure | “Works until it doesn’t”—hangs, orphaned runs, or opaque logs under fault |
+| **Error recovery** | Real runs hit **module errors, collisions, tip issues, and recoverable faults**; the stack must leave the robot and App in a **known-good state** to retry or start over | After an induced or natural error: run fails **predictably** (clear message), user can **cancel/recover**, **homing** and **lid/module state** recover; **no silent bad motion** on the next command; `/health` OK | Hung run, confused App state, or “works only if you power-cycle” after a normal protocol error |
+| **Resilience** | Infrastructure must survive harsh actions | After **E-stop**, **kill -9** on protocol child, or **mid-run cancel**, robot-server **stays up** and `/health` stays healthy; logs explain failure | “Works until it doesn’t”—hangs, orphaned runs, or opaque logs under fault |
+| **Jupyter notebook / interactive** | Some users drive the API from **Jupyter or a REPL**; objects cross the same serialization boundary **outside** a normal `run()` file | Interactive sessions **start/stop** cleanly; odd types or thread misuse yield **clear errors**, not undefined behavior | Only batch protocols ever exercised; surprise failures or bad objects only in lab notebooks |
+| **Deck calibration** | Pyro IPC correctness does not fix **wrong deck geometry**; bad calibration looks like “bad protocol” | **Calibration health checks** done on the same build; after cal changes, at least one **known protocol** still matches baseline motion | Chasing Pyro bugs that are actually **pipette/deck cal drift** or a bad deck setup |
 
 ---
 
@@ -41,7 +44,7 @@ This folder tracks **manual and protocol-driven validation** for the Opentrons F
 
 - **P2 — PD / analysis / viz:** PD-sourced and command-annotation-heavy protocols; compare outputs to baseline when subprocess is ON.
 
-- **Explicit non-protocol gates:** E-stop during motion, `kill -9` on protocol subprocess, REPL/threading edge cases—these are **manual or separate harnesses**, not replaced by normal `run()` protocols.
+- **Explicit non-protocol gates:** E-stop during motion, `kill -9` on protocol subprocess, **Jupyter / REPL** sessions (and threading / “bad object” edge cases), **deck & pipette calibration** verification—these are **manual or separate harnesses**, not fully replaced by a single shipped `run()` protocol.
 
 ---
 
@@ -51,9 +54,13 @@ Use this list to see what is **not** fully covered if the only thing executed wa
 
 - **Flag A/B:** Same representative protocol with **enableProtocolSubprocess OFF vs ON** (time, stability, logs) not compared.
 - **Faults:** No **cancel mid-run**, **E-stop**, or **process kill** evidence paired with **`/health`** and **`journalctl`**.
+- **Error recovery:** No exercise of **recoverable protocol errors** (e.g. module/labware faults) verifying **clean failure**, **App/run reset**, and **successful retry** on the same build.
+- **Jupyter:** No **notebook-driven** API session smoke after the release (interactive path vs batch `run()`).
+- **Regression:** doing a comprehensive regression test. 
+- **Customer facing IQOQ utility scripts:** This is ensuring that our customer facing scripts are stll working 
 - **Soak:** No **multi-repeat** or long **camera / command-list** stress on hardware.
 - **Peripherals:** No **camera / plate reader / stacker / TC** runs on a real deck (bandwidth and timing).
-- **Server vs CLI:** Only **`opentrons_execute`** on device was run (moves motors but **not** the App ⇄ robot-server ⇄** subprocess** path).
+- **Server vs CLI:** Only **`opentrons_execute`** on device was run (moves motors but **not** the App ⇄ robot-server ⇄ subprocess path).
 - **Analysis:** PD/run export or internal tooling not compared to a **baseline** with subprocess ON.
 
 If any row in the first table is “unknown” for your release candidate, treat it as a **coverage gap** until addressed with the approaches in this folder and the plan.
