@@ -1,4 +1,4 @@
-
+import opentrons.protocol_api as protocol_api
 requirements = {
 "robotType": "Flex",
 "apiLevel": "2.28"
@@ -25,7 +25,7 @@ def add_parameters(params):
 	        {"display_name": "Source (well-center + offset)", "value": "source"},
 	        {"display_name": "Dest (well-bottom + offset)", "value": "destination"}
 	    ],
-	    default="trash",
+	    default="destination",
 	)
 	params.add_str(
 		variable_name="trash_option",
@@ -37,7 +37,7 @@ def add_parameters(params):
 		default="trash_bin"
 	)
 
-def run(protocol_context):
+def run(protocol_context: protocol_api.ProtocolContext):
 	trash_selection = protocol_context.params.trash_option
 	blowout_selection = protocol_context.params.blowout_option
 	

@@ -15,7 +15,7 @@ from opentrons import protocol_api, types
 from opentrons.protocol_api import Labware, Task
 
 metadata = {
-    "protocolName": "Concurrent Module Operations Smoke Test - v2.27",
+    "protocolName": "Concurrent Module Operations Smoke Test",
     "author": "QA Team",
 }
 

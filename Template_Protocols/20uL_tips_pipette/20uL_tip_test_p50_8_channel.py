@@ -6,24 +6,11 @@ requirements = {
 }
 
 def run(ctx: protocol_api.ProtocolContext):
-    # --- 1. HARDWARE & LABWARE SETUP ---
-    # Load Flex Stacker in slot C4 as per your setup
-    stacker = ctx.load_module('flexStackerModuleV1', 'C4')
+    # Tip rack is loaded directly on deck (no stacker).
+    # If your physical tiprack has a lid, remove it manually before running.
     waste = ctx.load_waste_chute()
-    
-    # FIX: Define the labware pool before retrieval
-    # This must match the physical labware and lid count in the hopper
-    stacker.set_stored_labware(
-    load_name="opentrons_flex_96_tiprack_20ul",
-    count=5,
-    lid="opentrons_flex_tiprack_lid"
-)
-    
-    # Retrieve the labware object from the stacker pool
-    tip_rack = stacker.retrieve()
-    
-    # Deck locations for testing
-    working_slot = 'A2'
+    tip_rack = ctx.load_labware("opentrons_flex_96_tiprack_20ul", "C1")
+
     reservoir = ctx.load_labware('nest_12_reservoir_15ml', 'C2')
     plate = ctx.load_labware('corning_96_wellplate_360ul_flat', 'D2')
     
@@ -32,24 +19,6 @@ def run(ctx: protocol_api.ProtocolContext):
     
     # --- 2. LOAD LIQUID CLASSES ---
     # Accessing Opentrons-verified liquid class definitions
- 
-    glycerol_lc = ctx.get_liquid_class(name='glycerol_50')
-    ethanol_lc = ctx.get_liquid_class(name='ethanol_80')
-
-    # --- 3. STACKER & GRIPPER MANIPULATION ---
-    ctx.comment("Moving retrieved Tip Rack to deck...")
-    
-    # Move rack from stacker shuttle to working deck using the Gripper
-    ctx.move_labware(
-        labware=tip_rack,
-        new_location=working_slot,
-        use_gripper=True
-    )
-
-    # Remove lid and place it in slot B2 to access tips
-    ctx.comment("Removing lid to access tips...")
-    ctx.move_lid(tip_rack, waste, use_gripper=True)
-    ctx.move_labware(labware=tip_rack, new_location='C1', use_gripper=True)
 
     # --- 4. LIQUID CLASS STRESS TEST ---
     pipette.pick_up_tip(tip_rack.wells_by_name()['A1'])
@@ -57,14 +26,17 @@ def run(ctx: protocol_api.ProtocolContext):
     # Stress testing across verified classes
 
     water_lc = ctx.get_liquid_class(name='water')
-    classy = [water_lc]
+    ethanol_lc = ctx.get_liquid_class(name="ethanol_80")
+    glycerol_lc = ctx.get_liquid_class(name="glycerol_50")
+
+    classy = [water_lc, ethanol_lc, glycerol_lc]
     
     for i, LC in enumerate(classy):
         ctx.comment(f"Testing Liquid Class: {LC.name}")
         
         # Use transfer_with_liquid_class for automated physics handling
         pipette.transfer_with_liquid_class(
-            volume=45,
+            volume=45 if LC.name == "water" else 30,
             source=reservoir.wells()[i],
             dest=plate.wells()[i],
             liquid_class=LC,
@@ -84,7 +56,7 @@ def run(ctx: protocol_api.ProtocolContext):
     )
 
     # Pick up a single tip from a new column
-    pipette.pick_up_tip(tip_rack.wells_by_name()['A2'])
+    pipette.pick_up_tip(tip_rack.wells_by_name()["H2"])
     
     # Stress test single nozzle with viscous liquid class
     pipette.transfer_with_liquid_class(
@@ -99,7 +71,7 @@ def run(ctx: protocol_api.ProtocolContext):
 
     # Reset nozzle layout for clean exit
     pipette.configure_nozzle_layout(style=protocol_api.ALL)
-    pipette.pick_up_tip(tip_rack['A3'])
+    pipette.pick_up_tip(tip_rack.wells_by_name()["A3"])
     pipette.aspirate(10, reservoir.wells()[0])
     pipette.dispense(3, plate.wells()[0])
     pipette.dispense(6, plate.wells()[1])

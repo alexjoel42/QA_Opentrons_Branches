@@ -24,7 +24,7 @@ def main():
     
     try:
         # 1. Check current settings (Does not require auth)
-        print("--- Fetching Current Settings ---")[-]
+        print("--- Fetching Current Settings ---")
         current_settings = client.get_settings()
         print(f"Initial State: {current_settings['data']}")
     except httpx.HTTPStatusError as e:
@@ -81,7 +81,59 @@ def user_flow_example():
         # Always close the connection
         client.close()
 
+
+def protocol_upload_example():
+    """
+    Authenticate, then upload a protocol via POST /protocols (multipart).
+
+    Requires in .env: ROBOT_IP, ROBOT_ADMIN_USER, ROBOT_ADMIN_PASS, PROTOCOL_PATH
+    Optional: PROTOCOL_LABWARE_PATHS — comma-separated paths to extra labware JSON files.
+    """
+    ROBOT_IP = get_required_env_var("ROBOT_IP")
+    ADMIN_USER = get_required_env_var("ROBOT_ADMIN_USER")
+    ADMIN_PASS = get_required_env_var("ROBOT_ADMIN_PASS")
+    PROTOCOL_PATH = get_required_env_var("PROTOCOL_PATH")
+
+    labware_raw = os.getenv("PROTOCOL_LABWARE_PATHS", "").strip()
+    labware_paths = [p.strip() for p in labware_raw.split(",") if p.strip()] or None
+
+    client = OpentronsAuthClient(base_url=ROBOT_IP)
+
+    try:
+        print("\n--- Authenticating ---")
+        client.get_token(ADMIN_USER, ADMIN_PASS)
+        print("Successfully authenticated and obtained Bearer token.")
+
+        print("\n--- Uploading protocol ---")
+        print(f"File: {PROTOCOL_PATH}")
+        if labware_paths:
+            print(f"Extra labware files: {labware_paths}")
+
+        result = client.upload_protocol(
+            PROTOCOL_PATH,
+            labware_paths=labware_paths,
+        )
+        data = result.get("data", result)
+        protocol_id = data.get("id") if isinstance(data, dict) else None
+        if protocol_id:
+            print(f"Uploaded protocol id: {protocol_id}")
+        print(f"Response: {result}")
+
+    except httpx.HTTPStatusError as e:
+        print(f"\n❌ HTTP Error: {e.response.status_code}")
+        print(f"Details: {e.response.text}")
+    except httpx.ConnectError:
+        print("\n❌ Connection error: Is the robot server running and accessible?")
+    except OSError as e:
+        print(f"\n❌ File error (check PROTOCOL_PATH): {e}")
+    except Exception as e:
+        print(f"\n❌ An unexpected error occurred: {e}")
+    finally:
+        client.close()
+
+
 # --- EXECUTION BLOCK ---
 if __name__ == "__main__":
-    # You can call main() or user_flow_example() here depending on what you want to test!
+    # Pick one: main() | user_flow_example() | protocol_upload_example()
     user_flow_example()
+    # protocol_upload_example()

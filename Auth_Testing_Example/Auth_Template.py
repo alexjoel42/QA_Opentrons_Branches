@@ -1,5 +1,7 @@
+import json
 import httpx
-from typing import Any, Dict, Optional
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 
 class OpentronsAuthClient:
     """
@@ -28,6 +30,18 @@ class OpentronsAuthClient:
     def _get_headers(self, requires_auth: bool = True) -> Dict[str, str]:
         """Helper to construct headers with the Bearer token if required."""
         headers = {"Accept": "application/json"}
+        if requires_auth and self.token:
+            headers["Authorization"] = f"Bearer {self.token}"
+        return headers
+
+    def _robot_api_headers(
+        self, requires_auth: bool = True, opentrons_version: str = "*"
+    ) -> Dict[str, str]:
+        """Headers for main robot HTTP API routes (e.g. /protocols). Requires Opentrons-Version."""
+        headers: Dict[str, str] = {
+            "Accept": "application/json",
+            "Opentrons-Version": opentrons_version,
+        }
         if requires_auth and self.token:
             headers["Authorization"] = f"Bearer {self.token}"
         return headers
@@ -117,3 +131,63 @@ class OpentronsAuthClient:
         """Delete a specific user by its unique identifier."""
         response = self.client.delete(f"/auth/users/{user_name}", headers=self._get_headers())
         response.raise_for_status()
+
+    # --- Robot HTTP API: protocols (see https://docs.opentrons.com/http/api_reference.html) ---
+
+    def upload_protocol(
+        self,
+        protocol_path: str,
+        *,
+        labware_paths: Optional[List[str]] = None,
+        protocol_kind: str = "standard",
+        key: Optional[str] = None,
+        run_time_parameter_values: Optional[Dict[str, Any]] = None,
+        run_time_parameter_files: Optional[str] = None,
+        requires_auth: bool = True,
+        opentrons_version: str = "*",
+        timeout: float = 120.0,
+    ) -> Dict[str, Any]:
+        """
+        Upload a protocol via POST /protocols (multipart/form-data).
+
+        Send one Python or JSON protocol file as ``protocol_path``; optional custom labware
+        JSON files via ``labware_paths``. When access control is enabled, call ``get_token``
+        first so ``protocols.write`` is authorized.
+
+        ``run_time_parameter_values`` is sent as a JSON string in the form field, per API spec.
+        """
+        paths: List[str] = [protocol_path]
+        if labware_paths:
+            paths.extend(labware_paths)
+
+        file_handles: List[Any] = []
+        try:
+            multipart_files: List[tuple] = []
+            for p in paths:
+                path = Path(p)
+                fh = path.open("rb")
+                file_handles.append(fh)
+                multipart_files.append(("files", (path.name, fh)))
+
+            data: Dict[str, str] = {"protocol_kind": protocol_kind}
+            if key is not None:
+                data["key"] = key
+            if run_time_parameter_values is not None:
+                data["run_time_parameter_values"] = json.dumps(run_time_parameter_values)
+            if run_time_parameter_files is not None:
+                data["run_time_parameter_files"] = run_time_parameter_files
+
+            response = self.client.post(
+                "/protocols",
+                headers=self._robot_api_headers(
+                    requires_auth=requires_auth, opentrons_version=opentrons_version
+                ),
+                files=multipart_files,
+                data=data,
+                timeout=timeout,
+            )
+            response.raise_for_status()
+            return response.json()
+        finally:
+            for fh in file_handles:
+                fh.close()

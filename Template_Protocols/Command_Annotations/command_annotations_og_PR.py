@@ -1,11 +1,11 @@
 requirements = {
-	"robotType": "Flex",
-	"apiLevel": "2.27"
+	"apiLevel": "2.29"
 }
 
 metadata = {
     "protocolName":'Command Annotations PAPI Test',
-    'author':'Jeremy'
+    'author':'Jeremy',
+	'robotType': 'Flex'
 }
 
 def run(protocol_context):
