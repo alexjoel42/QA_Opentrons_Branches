@@ -23,3 +23,15 @@ int main()
     //  allowing other programs or scripts that call this program to understand what went wrong.
     return 1;
 }
+
+int datatypes()
+{ 
+    /*
+    In C there are severa datatypes
+    Integers: char, int, short, long, or long long.
+    unsigned integers - unsigned char, unsigned int, unsigned short, unsigned long, unsigned long long 
+    Floating-point numbers: float, double, or long double.
+    booleans: bool (available in C99 and later) or _Bool (available in C11 and later).
+    structures: struct, which allows you to define your own custom data types that can contain multiple members of different types.
+    */
+}

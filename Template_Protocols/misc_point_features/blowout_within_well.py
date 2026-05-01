@@ -6,7 +6,7 @@ requirements = {
 
 metadata = {
 "protocolName":'Test different blowout locations & positions',
-'author':'sanniti'
+'author':'QA'
 }
 
 
