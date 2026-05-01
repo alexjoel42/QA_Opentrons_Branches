@@ -1,0 +1,7 @@
+source_labware,source_slot,source_well,source_height_above_bottom_mm,destination_labware,destination_slot,destination_well,volume_μl
+ff_96_wellplate_200ul,C1,A1,11.0,alex_96_wellplate_300ul,D2,A1,11
+ff_96_wellplate_200ul,C1,A1,11,alex_96_wellplate_300ul,D2,A1,11
+ff_96_wellplate_200ul,C1,A1,11,alex_96_wellplate_300ul,D2,A1,11
+ff_96_wellplate_200ul,C1,A1,11,alex_96_wellplate_300ul,D2,A1,11
+ff_96_wellplate_200ul,C1,A1,11,alex_96_wellplate_300ul,D2,A1,11
+ff_96_wellplate_200ul,C1,A1,11,alex_96_wellplate_300ul,D2,A1,11

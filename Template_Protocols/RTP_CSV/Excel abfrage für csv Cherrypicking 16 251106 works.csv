@@ -1,0 +1,8 @@
+Source Labware,Source Slot,Source Well,Source Aspiration Height Above Bottom (in mm),Dest Labware,Dest Slot,Dest Well,Volume (in ul)
+opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical,1,A1,2,opentrons_24_aluminumblock_nest_0.5ml_screwcap,4,A1,400
+opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical,1,A1,2,opentrons_24_aluminumblock_nest_0.5ml_screwcap,4,A2,400
+opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical,1,A1,2,opentrons_24_aluminumblock_nest_0.5ml_screwcap,4,A3,400
+opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical,1,A1,2,opentrons_24_aluminumblock_nest_0.5ml_screwcap,4,A4,400
+opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical,1,A1,2,opentrons_24_aluminumblock_nest_0.5ml_screwcap,4,A5,400
+opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical,1,A1,2,opentrons_24_aluminumblock_nest_0.5ml_screwcap,4,A6,400
+opentrons_10_tuberack_falcon_4x50ml_6x15ml_conical,1,A1,2,opentrons_24_aluminumblock_nest_0.5ml_screwcap,4,B1,400
