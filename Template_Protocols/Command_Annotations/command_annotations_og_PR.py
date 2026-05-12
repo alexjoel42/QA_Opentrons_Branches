@@ -1,11 +1,11 @@
 requirements = {
-	"apiLevel": "2.29"
+	"apiLevel": "2.29",
+	"robotType":'Flex'
 }
 
 metadata = {
     "protocolName":'Command Annotations PAPI Test',
-    'author':'Jeremy',
-	'robotType': 'Flex'
+    'author':'QA'
 }
 
 def run(protocol_context):
@@ -19,8 +19,7 @@ def run(protocol_context):
 			pipette_1k.pick_up_tip()
 			pipette_1k.aspirate(50, nest_plate[f'A{i + 1}'].bottom(z=1))
 			pipette_1k.dispense(50, arma_plate[f'A{i + 1}'].bottom(z=1))
-			with protocol_context.group_steps("drop tip"):
-				pipette_1k.drop_tip()
+			pipette_1k.drop_tip()
 	
 
 	pipette_1k.pick_up_tip()
@@ -37,7 +36,7 @@ def run(protocol_context):
 	pipette_1k.touch_tip()
 	pipette_1k.drop_tip()
 	# Doesn't work yet because we need to wire up
-	step_group.end_group()
+
 
 	pipette_1k.pick_up_tip()
 	pipette_1k.return_tip()

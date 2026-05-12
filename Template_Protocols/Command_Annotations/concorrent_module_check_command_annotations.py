@@ -172,9 +172,9 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
 
             ctx.comment("⏳ Both tasks running concurrently (heating ↑ and cooling ↓)...")
             # Wait for both tasks to complete using ctx.wait_for_tasks()
-        ctx.wait_for_tasks([hs_task, td_task])
-        ctx.comment("✓ TEST 2 COMPLETE: HS and TD finished")
-        ctx.comment("")
+            ctx.wait_for_tasks([hs_task, td_task])
+            ctx.comment("✓ TEST 2 COMPLETE: HS and TD finished")
+            ctx.comment("")
 
     # ========== TEST 3: TC, TD, and HS Operating Concurrently ==========
     if test_scenario in ["all", "tc_td_hs"]:

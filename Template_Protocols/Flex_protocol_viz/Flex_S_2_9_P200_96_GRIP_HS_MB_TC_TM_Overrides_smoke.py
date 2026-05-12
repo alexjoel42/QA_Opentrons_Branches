@@ -2,6 +2,11 @@
 # CHANGELOG #
 #############
 
+# 2.29
+# - Include command annotations
+# -
+
+
 # 2.28
 # - Improved blowout height configuration for liquid classes
 # - Ramp rate for thermocycler
@@ -104,13 +109,13 @@
 from opentrons import protocol_api
 
 metadata = {
-    "protocolName": "Flex Smoke Test - v2.27",
+    "protocolName": "Flex Smoke Test - v2.29",
     "author": "QA team",
 }
 
 requirements = {
     "robotType": "Flex",
-    "apiLevel": "2.28",
+    "apiLevel": "2.29",
 }
 
 
@@ -258,68 +263,70 @@ def log_position(ctx, item):
 
 
 def run(ctx: protocol_api.ProtocolContext) -> None:
-    ################
-    ### FIXTURES ###
-    ################
 
-    waste_chute = ctx.load_waste_chute()
-    STACKER_PARAMS = ctx.params.number_of_stackers
+    with ctx.group_steps("This is going to be the variable/module setup"):
+        ################
+        ### FIXTURES ###
+        ################
 
-    ######################
-    ### STACKER SET UP ###
-    ######################
+        waste_chute = ctx.load_waste_chute()
+        STACKER_PARAMS = ctx.params.number_of_stackers
 
-    if STACKER_PARAMS == "1":
-        stacker_D4 = ctx.load_module(FLEX_STACKER, "D4")
-        stacker_D4.set_stored_labware(
-            TIPRACK_96_1000, count=6, lid="opentrons_flex_tiprack_lid"
+        ######################
+        ### STACKER SET UP ###
+        ######################
+
+        if STACKER_PARAMS == "1":
+            stacker_D4 = ctx.load_module(FLEX_STACKER, "D4")
+            stacker_D4.set_stored_labware(
+                TIPRACK_96_1000, count=6, lid="opentrons_flex_tiprack_lid"
+            )
+        elif STACKER_PARAMS == "2":
+            stacker_C4 = ctx.load_module(FLEX_STACKER, "C4")
+            stacker_C4.set_stored_labware(TIPRACK_96_1000, count=0)
+
+            stacker_D4 = ctx.load_module(FLEX_STACKER, "D4")
+            stacker_D4.set_stored_labware(
+                TIPRACK_96_1000, count=6, lid="opentrons_flex_tiprack_lid"
+            )
+        elif STACKER_PARAMS == "3":
+            stacker_A4 = ctx.load_module(FLEX_STACKER, "A4")
+            stacker_A4.set_stored_labware(ctx.params.well_plate_name, count=2)
+
+            stacker_C4 = ctx.load_module(FLEX_STACKER, "C4")
+            stacker_C4.set_stored_labware(TIPRACK_96_1000, count=0)
+
+            stacker_D4 = ctx.load_module(FLEX_STACKER, "D4")
+            stacker_D4.set_stored_labware(
+                TIPRACK_96_1000, count=6, lid="opentrons_flex_tiprack_lid"
+            )
+
+        ###############
+        ### MODULES ###
+        ###############
+        thermocycler = ctx.load_module(THERMOCYCLER_NAME)  # A1 & B1
+        magnetic_block = ctx.load_module(MAGNETIC_BLOCK_NAME, "A3")
+        heater_shaker = ctx.load_module(HEATER_SHAKER_NAME, "C1")
+        temperature_module = ctx.load_module(TEMPERATURE_MODULE_NAME, "D1")
+        absorbance_module = ctx.load_module(ABSORBANCE_READER, "B3")
+        lids = ctx.load_lid_stack(
+            load_name=TC_LID, location="A4", quantity=5, adapter=DECK_RISER_NAME
         )
-    elif STACKER_PARAMS == "2":
-        stacker_C4 = ctx.load_module(FLEX_STACKER, "C4")
-        stacker_C4.set_stored_labware(TIPRACK_96_1000, count=0)
+        #######################
+        ### MODULE ADAPTERS ###
+        #######################
 
-        stacker_D4 = ctx.load_module(FLEX_STACKER, "D4")
-        stacker_D4.set_stored_labware(
-            TIPRACK_96_1000, count=6, lid="opentrons_flex_tiprack_lid"
+        temperature_module_adapter = temperature_module.load_adapter(
+            TEMPERATURE_MODULE_ADAPTER_NAME
         )
-    elif STACKER_PARAMS == "3":
-        stacker_A4 = ctx.load_module(FLEX_STACKER, "A4")
-        stacker_A4.set_stored_labware(ctx.params.well_plate_name, count=2)
+        heater_shaker_adapter = heater_shaker.load_adapter(HEATER_SHAKER_ADAPTER_NAME)
+        adapters = [temperature_module_adapter, heater_shaker_adapter]
 
-        stacker_C4 = ctx.load_module(FLEX_STACKER, "C4")
-        stacker_C4.set_stored_labware(TIPRACK_96_1000, count=0)
-
-        stacker_D4 = ctx.load_module(FLEX_STACKER, "D4")
-        stacker_D4.set_stored_labware(
-            TIPRACK_96_1000, count=6, lid="opentrons_flex_tiprack_lid"
-        )
-
-    ###############
-    ### MODULES ###
-    ###############
-    thermocycler = ctx.load_module(THERMOCYCLER_NAME)  # A1 & B1
-    magnetic_block = ctx.load_module(MAGNETIC_BLOCK_NAME, "A3")
-    heater_shaker = ctx.load_module(HEATER_SHAKER_NAME, "C1")
-    temperature_module = ctx.load_module(TEMPERATURE_MODULE_NAME, "D1")
-    absorbance_module = ctx.load_module(ABSORBANCE_READER, "B3")
-    lids = ctx.load_lid_stack(
-        load_name=TC_LID, location="A4", quantity=5, adapter=DECK_RISER_NAME
-    )
     thermocycler.open_lid()
     heater_shaker.open_labware_latch()
     absorbance_module.close_lid()
     absorbance_module.initialize("single", [600], 450)
     absorbance_module.open_lid()
-
-    #######################
-    ### MODULE ADAPTERS ###
-    #######################
-
-    temperature_module_adapter = temperature_module.load_adapter(
-        TEMPERATURE_MODULE_ADAPTER_NAME
-    )
-    heater_shaker_adapter = heater_shaker.load_adapter(HEATER_SHAKER_ADAPTER_NAME)
-    adapters = [temperature_module_adapter, heater_shaker_adapter]
 
     ###############
     ### LABWARE ###
@@ -355,6 +362,9 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
     #########################
     ###LOAD LIQUID CLASSES###
     #########################
+    step_group = ctx.create_and_start_step_group(
+        "Liquid classes", description="This defines liquids and labware"
+    )
 
     water = ctx.define_liquid(
         name="water", description="High Quality H₂O", display_color="#42AB2D"
@@ -364,6 +374,7 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
     water_class = ctx.get_liquid_class(name="water")
     glycerol_50 = ctx.get_liquid_class(name="glycerol_50")
     ethanol_80 = ctx.get_liquid_class(name="ethanol_80")
+    step_group.end_group()
 
     ##########################
     ### PIPETTE DEFINITION ###
@@ -391,6 +402,9 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
     ################################
     ### GRIPPER LABWARE MOVEMENT ###
     ################################
+    step_group = ctx.create_and_start_step_group(
+        "Move labware", description="This will have many gripper moves"
+    )
 
     ctx.move_labware(dest_pcr_plate, magnetic_block)
     ctx.move_labware(dest_pcr_plate, WELL_PLATE_STARTING_POSITION)
@@ -410,6 +424,8 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
     log_position(ctx, source_reservoir)
     ctx.move_labware(source_reservoir, RESERVOIR_STARTING_POSITION, use_gripper=True)
     log_position(ctx, source_reservoir)
+
+    step_group.end_group()
 
     # Other important manual moves?
 
