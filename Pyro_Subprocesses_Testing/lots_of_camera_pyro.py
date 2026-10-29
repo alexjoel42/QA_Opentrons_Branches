@@ -44,7 +44,7 @@ CSV_PATH = Path("/tmp/pyro_ipc_qa_metrics.csv")
 
 def add_parameters(parameters: protocol_api.Parameters) -> None:
     parameters.add_int(
-        display_name="Burst captures (home_before=False)",
+        display_name="Burst captures",
         variable_name="photo_burst_count",
         default=100,
         minimum=1,

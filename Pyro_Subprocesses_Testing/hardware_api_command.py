@@ -1,7 +1,7 @@
 from opentrons import protocol_api, types
 
 metadata = {
-    'protocolName': 'pickup and dip labware',
+    'protocolName': 'Protocol 2: Hardware API pick up and drop labware',
     'author': 'Jon Klar',
     'description': 'Protocol for picking up a labware with the gripper and dipping it at another position without releasing',
 }

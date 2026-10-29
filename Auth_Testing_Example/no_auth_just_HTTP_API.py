@@ -25,7 +25,7 @@ def _robot_base_url() -> str:
     base = (os.environ.get("ROBOT_BASE_URL") or "").strip()
     if base:
         return base.rstrip("/")
-    ip = (os.environ.get("ROBOT_IP") or "10.14.19.73").strip()
+    ip = (os.environ.get("ROBOT_IP") or "10.14.19.34").strip()
     return f"http://{ip}:31950"
 
 
@@ -63,7 +63,7 @@ def _try_get_json(client: httpx.Client, path: str, *, params: dict | None = None
 def main() -> None:
     with httpx.Client(base_url=BASE, headers=HDR, timeout=120.0) as c:
         print(f"Target: {BASE}")
-        path = "/pipettes"
+        path = "/robot/door/status"
         params = {"refresh": "true"} if PIPETTES_REFRESH else None
         _print(f"GET {path}", _try_get_json(c, path, params=params))
 

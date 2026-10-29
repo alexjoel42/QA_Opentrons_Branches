@@ -737,9 +737,6 @@ def run(ctx: protocol_api.ProtocolContext) -> None:
 
         # Second part - use different configurations based on the iteration
         ctx.comment("This is a configuration")
-        ctx.pause(
-            msg="When you do single vs. column tip pickup, they should be using the same liquid handling steps"
-        )
 
         # Use a different configuration for each liquid class
         if i == 0:  # First liquid class (water_class)
